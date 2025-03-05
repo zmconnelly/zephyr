@@ -12,13 +12,24 @@
   "app": {
     "windows": [
       {
-        "title": "haku",
-        "width": 800,
-        "height": 600
+        "title": "Haku",
+        "width": 500,
+        "height": 200,
+        "resizable": true,
+        "decorations": true,
+        "center": true,
+        "focus": true,
+        "alwaysOnTop": true
       }
     ],
     "security": {
       "csp": null
+    },
+    "trayIcon": {
+      "iconPath": "icons/32x32.png",
+      "iconAsTemplate": true,
+      "showMenuOnLeftClick": false,
+      "tooltip": "Haku Search"
     }
   },
   "bundle": {
