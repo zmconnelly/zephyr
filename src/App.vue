@@ -13,7 +13,7 @@ async function greet() {
 
 <template>
   <main class="container">
-    <h1>Welcome to Tauri + Vue</h1>
+    <h1 class="text-3xl font-bold text-red-500">Welcome to Haku</h1>
 
     <div class="row">
       <a href="https://vitejs.dev" target="_blank">
