@@ -1,16 +1,53 @@
-# Tauri + Vue + TypeScript
+# Haku - Quick Search Bar
 
-This template should help get you started developing with Vue 3 and TypeScript in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+Haku is a lightweight desktop search bar application built with Tauri, Rust, Vue, and Tailwind CSS. It provides a quick way to search the web using various search engines.
 
-## Recommended IDE Setup
+## Features
 
-- [VS Code](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer)
+- Minimal, clean search interface
+- Support for multiple search engines (Google, Bing, DuckDuckGo, Yahoo)
+- Global shortcut (Shift+Space) to show/hide the search bar
+- Automatically hides when not in use
+- System tray icon for easy access
 
-## Type Support For `.vue` Imports in TS
+## Development
 
-Since TypeScript cannot handle type information for `.vue` imports, they are shimmed to be a generic Vue component type by default. In most cases this is fine if you don't really care about component prop types outside of templates. However, if you wish to get actual prop types in `.vue` imports (for example to get props validation when using manual `h(...)` calls), you can enable Volar's Take Over mode by following these steps:
+### Prerequisites
 
-1. Run `Extensions: Show Built-in Extensions` from VS Code's command palette, look for `TypeScript and JavaScript Language Features`, then right click and select `Disable (Workspace)`. By default, Take Over mode will enable itself if the default TypeScript extension is disabled.
-2. Reload the VS Code window by running `Developer: Reload Window` from the command palette.
+- [Rust](https://www.rust-lang.org/tools/install)
+- [Node.js](https://nodejs.org/) or [Bun](https://bun.sh/)
+- [Tauri CLI](https://tauri.app/v1/guides/getting-started/prerequisites)
 
-You can learn more about Take Over mode [here](https://github.com/johnsoncodehk/volar/discussions/471).
+### Setup
+
+1. Clone the repository
+2. Install dependencies:
+
+```bash
+bun install
+```
+
+3. Run the development server:
+
+```bash
+bun run tauri dev
+```
+
+### Building
+
+To build the application for production:
+
+```bash
+bun run tauri build
+```
+
+## Usage
+
+1. Press `Shift+Space` to open the search bar
+2. Type your search query
+3. Press `Enter` to search
+4. Click the settings icon to change the search engine
+
+## License
+
+MIT
