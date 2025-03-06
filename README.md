@@ -31,7 +31,7 @@ bun install
 3. Run the development server:
 
 ```bash
-bun run tauri dev
+bun dev
 ```
 
 ### Building
@@ -39,8 +39,18 @@ bun run tauri dev
 To build the application for production:
 
 ```bash
-bun dev
+bun run tauri build
 ```
+
+## CI/CD
+
+This project uses GitHub Actions for continuous integration and deployment:
+
+- Automatic builds are triggered on merges to the `main` branch
+- Windows installers (MSI and NSIS) are automatically generated
+- Releases are published to GitHub Releases with version numbers based on the build number
+
+To view the workflow configuration, see [.github/workflows/release.yml](.github/workflows/release.yml).
 
 ## Usage
 
