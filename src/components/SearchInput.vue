@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, defineProps, defineEmits, defineExpose } from 'vue';
+import { ref } from 'vue';
 
 defineProps<{
   modelValue: string;

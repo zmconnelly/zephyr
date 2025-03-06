@@ -66,13 +66,7 @@ pub async fn search(query: String, bang_state: State<'_, BangState>) -> Result<(
     // Spawn browser process
     #[cfg(target_os = "windows")]
     {
-        match Command::new("cmd")
-            .args(["/C", "start", "chrome", &url])
-            .spawn()
-        {
-            Ok(_) => Ok(()),
-            Err(e) => Err(format!("Failed to open Chrome: {}", e)),
-        }
+        open_url_without_console(&url)
     }
 
     #[cfg(not(target_os = "windows"))]
@@ -83,8 +77,27 @@ pub async fn search(query: String, bang_state: State<'_, BangState>) -> Result<(
 
 #[tauri::command]
 pub async fn open_url(url: String) -> Result<(), String> {
+    #[cfg(target_os = "windows")]
+    {
+        open_url_without_console(&url)
+    }
+
+    #[cfg(not(target_os = "windows"))]
+    {
+        Err("Opening browser is only supported on Windows".to_string())
+    }
+}
+
+#[cfg(target_os = "windows")]
+fn open_url_without_console(url: &str) -> Result<(), String> {
+    use std::os::windows::process::CommandExt;
+
+    // CREATE_NO_WINDOW flag to prevent console window from appearing
+    const CREATE_NO_WINDOW: u32 = 0x08000000;
+
     match Command::new("cmd")
-        .args(["/C", "start", "chrome", &url])
+        .args(["/C", "start", "chrome", url])
+        .creation_flags(CREATE_NO_WINDOW)
         .spawn()
     {
         Ok(_) => Ok(()),
