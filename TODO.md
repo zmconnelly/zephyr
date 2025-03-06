@@ -10,6 +10,8 @@
 
 - Awkward space between search bar and suggestions list
 
+- Icons for bangs
+
 ### Bugs
 
 - Bang search catelog sucks

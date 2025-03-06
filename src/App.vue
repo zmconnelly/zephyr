@@ -21,29 +21,6 @@ const isRefreshingBangs = ref(false);
 // Flag to show bang info
 const showBangInfo = ref(false);
 
-// Common search terms for offline suggestions (as fallback)
-const commonSearchTerms = [
-  "weather",
-  "news",
-  "maps",
-  "translate",
-  "youtube",
-  "facebook",
-  "twitter",
-  "instagram",
-  "amazon",
-  "netflix",
-  "spotify",
-  "gmail",
-  "outlook",
-  "linkedin",
-  "github",
-  "stackoverflow",
-  "reddit",
-  "wikipedia",
-  "dictionary",
-  "thesaurus"
-];
 
 // Compute the window height based on suggestions
 const windowHeight = computed(() => {
@@ -211,40 +188,6 @@ const generateSuggestions = debounce(async (query: string) => {
     if (googleSuggestions.length > 0) {
       // If we got suggestions from Google, use those
       suggestions.value = googleSuggestions.slice(0, 8);
-    } else {
-      // Fallback to local filtering if Google API fails
-      const matchingTerms = commonSearchTerms.filter(term => 
-        term.toLowerCase().includes(query.toLowerCase())
-      );
-      
-      // Generate variations of the query as fallback
-      const variations = [
-        query,
-        `${query} how to`,
-        `${query} meaning`,
-        `${query} definition`,
-        `${query} near me`,
-        `best ${query}`,
-        `${query} online`,
-        `${query} tutorial`
-      ];
-      
-      // Combine and deduplicate
-      const allSuggestions = [...new Set([...matchingTerms, ...variations])];
-      
-      // Sort by relevance (exact matches first, then by length)
-      allSuggestions.sort((a, b) => {
-        const aStartsWithQuery = a.toLowerCase().startsWith(query.toLowerCase());
-        const bStartsWithQuery = b.toLowerCase().startsWith(query.toLowerCase());
-        
-        if (aStartsWithQuery && !bStartsWithQuery) return -1;
-        if (!aStartsWithQuery && bStartsWithQuery) return 1;
-        
-        return a.length - b.length;
-      });
-      
-      // Limit to 8 suggestions
-      suggestions.value = allSuggestions.slice(0, 8);
     }
     
     showSuggestions.value = suggestions.value.length > 0;
