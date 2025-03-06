@@ -1,3 +1,10 @@
+## [1.0.1](https://github.com/zmconnelly/zephyr/compare/v1.0.0...v1.0.1) (2025-03-06)
+
+
+### Bug Fixes
+
+* keep cmd window hidden when launching browser ([e082bac](https://github.com/zmconnelly/zephyr/commit/e082bac89411e377e670eb12f25e3b407c4cd884))
+
 # 1.0.0 (2025-03-06)
 
 
