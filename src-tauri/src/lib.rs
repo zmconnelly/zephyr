@@ -10,7 +10,6 @@ mod search;
 
 pub fn run() {
     tauri::Builder::default()
-        .plugin(tauri_plugin_updater::Builder::new().build())
         .setup(|app| {
             // Initialize bangs
             let app_handle = app.handle().clone();
