@@ -13,6 +13,7 @@
 ### Bugs
 
 - Bang search catelog sucks
+- Initial suggestions are slow compared to next updates
 
 ### Feature Ideas
 
