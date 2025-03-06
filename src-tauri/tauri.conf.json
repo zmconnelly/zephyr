@@ -13,7 +13,7 @@
     "windows": [
       {
         "title": "Haku",
-        "width": 500,
+        "width": 750,
         "height": 150,
         "resizable": true,
         "decorations": false,
