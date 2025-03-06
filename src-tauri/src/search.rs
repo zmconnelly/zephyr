@@ -81,6 +81,17 @@ pub async fn search(query: String, bang_state: State<'_, BangState>) -> Result<(
     }
 }
 
+#[tauri::command]
+pub async fn open_url(url: String) -> Result<(), String> {
+    match Command::new("cmd")
+        .args(["/C", "start", "chrome", &url])
+        .spawn()
+    {
+        Ok(_) => Ok(()),
+        Err(e) => Err(format!("Failed to open Chrome: {}", e)),
+    }
+}
+
 // Function to check if a string is likely a URL
 fn is_url(input: &str) -> bool {
     let input = input.trim();

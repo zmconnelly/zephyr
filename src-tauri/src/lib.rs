@@ -82,6 +82,7 @@ pub fn run() {
             search::refresh_bangs,
             search::add_custom_bang,
             search::delete_custom_bang,
+            search::open_url,
             log_to_console
         ])
         .run(tauri::generate_context!())
