@@ -92,10 +92,10 @@ pub fn run() {
 #[tauri::command]
 fn log_to_console(level: &str, message: &str) {
     match level {
-        "error" => eprintln!("[Frontend Error] {}", message),
-        "warn" => println!("[Frontend Warning] {}", message),
-        "info" => println!("[Frontend Info] {}", message),
-        "debug" => println!("[Frontend Debug] {}", message),
-        _ => println!("[Frontend Log] {}", message),
+        "error" => eprintln!("\x1b[31m[WebView] {}\x1b[0m", message), // Red for errors
+        "warn" => println!("\x1b[33m[WebView] {}\x1b[0m", message),   // Yellow for warnings
+        "info" => println!("\x1b[32m[WebView] {}\x1b[0m", message),   // Green for info
+        "debug" => println!("\x1b[36m[WebView] {}\x1b[0m", message),  // Cyan for debug
+        _ => println!("[WebView] {}", message),                       // Default with no color
     }
 }

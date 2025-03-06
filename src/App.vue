@@ -253,7 +253,6 @@ const generateSuggestions = debounce(async (query: string) => {
   }
 }, 75);
 
-// Watch for changes in the search query
 watch(searchQuery, (newQuery) => {
   // Only regenerate suggestions if the change wasn't programmatic
   if (!isProgrammaticChange.value) {
@@ -359,11 +358,10 @@ function handleKeyDown(event: KeyboardEvent) {
   }
 }
 
-// Function to handle input blur
 function handleBlur() {
   setTimeout(() => {
     showSuggestions.value = false;
-  }, 200);
+  }, 50);
 }
 
 async function performSearch() {
@@ -393,7 +391,7 @@ async function performSearch() {
             ref="searchInput"
             v-model="searchQuery"
             type="text"
-            placeholder="Search... (Type ! for bangs)"
+            placeholder="Search (Type ! for bangs)"
             class="w-full px-4 py-3 pl-10 rounded-lg border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-lg"
             @keydown="handleKeyDown"
             @blur="handleBlur"

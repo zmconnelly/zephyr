@@ -9,7 +9,14 @@ const originalConsole = {
   debug: console.debug
 };
 
-// Function to format any type of message
+export function restoreConsole() {
+  console.log = originalConsole.log;
+  console.info = originalConsole.info;
+  console.warn = originalConsole.warn;
+  console.error = originalConsole.error;
+  console.debug = originalConsole.debug;
+}
+
 function formatMessage(args: any[]): string {
   return args.map(arg => {
     if (typeof arg === 'object') {
@@ -23,11 +30,10 @@ function formatMessage(args: any[]): string {
   }).join(' ');
 }
 
-// Override console methods
-export function setupConsoleRedirection() {
+export function setupConsoleRedirect() {
   console.log = (...args: any[]) => {
     const message = formatMessage(args);
-    originalConsole.log(...args); // Still log to browser console
+    originalConsole.log(...args);
     invoke('log_to_console', { level: 'log', message }).catch(err => {
       originalConsole.error('Failed to send log to Rust backend:', err);
     });
@@ -64,13 +70,6 @@ export function setupConsoleRedirection() {
       originalConsole.error('Failed to send debug to Rust backend:', err);
     });
   };
-}
 
-// Function to restore original console behavior
-export function restoreConsole() {
-  console.log = originalConsole.log;
-  console.info = originalConsole.info;
-  console.warn = originalConsole.warn;
-  console.error = originalConsole.error;
-  console.debug = originalConsole.debug;
-} 
+  console.info("Vue app started");
+}

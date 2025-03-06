@@ -1,11 +1,7 @@
 import { createApp } from "vue";
 import App from "./App.vue";
-import { setupConsoleRedirection } from "./utils/logger";
+import { setupConsoleRedirect } from "./utils/logger";
 
-// Set up console redirection to Rust backend
-setupConsoleRedirection();
-
-// Log a test message
-console.log("Vue app starting - logs will appear in terminal");
+setupConsoleRedirect();
 
 createApp(App).mount("#app");
