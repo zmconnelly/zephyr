@@ -251,7 +251,7 @@ const generateSuggestions = debounce(async (query: string) => {
   } catch (error) {
     console.error('Error generating suggestions:', error);
   }
-}, 100);
+}, 75);
 
 // Watch for changes in the search query
 watch(searchQuery, (newQuery) => {
