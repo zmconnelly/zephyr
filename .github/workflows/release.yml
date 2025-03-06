@@ -16,6 +16,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Important for semantic-release to analyze commit history
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -31,13 +33,25 @@ jobs:
           workspaces: src-tauri
           cache-on-failure: true
 
+      - name: Semantic Release
+        id: semantic
+        uses: cycjimmy/semantic-release-action@v4
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          semantic_version: 19
+          extra_plugins: |
+            @semantic-release/git
+            @semantic-release/changelog
+
       - name: Build and release Tauri app
+        if: steps.semantic.outputs.new_release_published == 'true' # Only build if a new version was published
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tagName: v__VERSION__
-          releaseName: "Release v__VERSION__"
-          releaseBody: "Automated release from GitHub Actions."
+          tagName: v${{ steps.semantic.outputs.new_release_version }} # Use the version from semantic-release
+          releaseName: "Release v${{ steps.semantic.outputs.new_release_version }}" # Use the version from semantic-release
+          releaseBody: ${{ steps.semantic.outputs.new_release_notes }} # Use the release notes from semantic-release
           releaseDraft: false
           prerelease: false
