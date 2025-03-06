@@ -122,7 +122,7 @@ fn get_cache_path(_app_handle: &AppHandle) -> PathBuf {
         PathBuf::from("./")
     };
 
-    path.push("haku");
+    path.push("zephyr");
     path.push("bangs_cache.json");
 
     // Ensure directory exists
@@ -150,7 +150,7 @@ fn get_settings_path(_app_handle: &AppHandle) -> PathBuf {
         PathBuf::from("./")
     };
 
-    path.push("haku");
+    path.push("zephyr");
     path.push("user_bangs.json");
 
     // Ensure directory exists

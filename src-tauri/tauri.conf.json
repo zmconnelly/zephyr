@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "haku",
+  "productName": "zephyr",
   "version": "0.1.0",
-  "identifier": "com.haku.app",
+  "identifier": "com.zephyr.app",
   "build": {
     "beforeDevCommand": "bun run vite",
     "devUrl": "http://localhost:1420",
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "Haku",
+        "title": "Zephyr",
         "width": 750,
         "height": 150,
         "resizable": true,
@@ -31,7 +31,7 @@
     "trayIcon": {
       "iconPath": "icons/32x32.png",
       "iconAsTemplate": true,
-      "tooltip": "Haku Search"
+      "tooltip": "Zephyr Search"
     }
   },
   "bundle": {
