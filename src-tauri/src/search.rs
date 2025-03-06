@@ -4,6 +4,7 @@ use std::process::Command;
 use std::sync::Mutex;
 use tauri::AppHandle;
 use tauri::State;
+use url::Url;
 
 pub struct BangState {
     pub bangs: Mutex<HashMap<String, bangs::Bang>>,
@@ -51,7 +52,16 @@ pub async fn get_search_suggestions(query: String) -> Result<Vec<String>, String
 
 #[tauri::command]
 pub async fn search(query: String, bang_state: State<'_, BangState>) -> Result<(), String> {
-    let url = get_bang_redirect_url(query, &bang_state);
+    // Check if the query is a URL
+    let url = if is_url(&query) {
+        // Ensure the URL has a scheme (http/https)
+        ensure_url_scheme(query)
+    } else {
+        // Not a URL, process as a regular search with potential bangs
+        get_bang_redirect_url(query, &bang_state)
+    };
+
+    println!("Opening URL: {}", url);
 
     // Spawn browser process
     #[cfg(target_os = "windows")]
@@ -69,6 +79,44 @@ pub async fn search(query: String, bang_state: State<'_, BangState>) -> Result<(
     {
         Err("Opening browser is only supported on Windows".to_string())
     }
+}
+
+// Function to check if a string is likely a URL
+fn is_url(input: &str) -> bool {
+    let input = input.trim();
+
+    // First, check if it's a valid URL with scheme
+    if let Ok(_) = Url::parse(input) {
+        return true;
+    }
+
+    // Check if adding https:// prefix makes it a valid URL
+    if let Ok(_) = Url::parse(&format!("https://{}", input)) {
+        // Make sure it has at least one dot (for domain)
+        return input.contains(".");
+    }
+
+    false
+}
+
+// Function to ensure a URL has a scheme (http/https)
+fn ensure_url_scheme(url: String) -> String {
+    let url = url.trim();
+
+    // Check if it's already a valid URL with scheme
+    if Url::parse(url).is_ok() {
+        return url.to_string();
+    }
+
+    // Try adding https:// prefix
+    let with_https = format!("https://{}", url);
+    if Url::parse(&with_https).is_ok() {
+        return with_https;
+    }
+
+    // If all else fails, just return the original with https:// prefix
+    // The browser will handle invalid URLs
+    format!("https://{}", url)
 }
 
 fn get_bang_redirect_url(query: String, bang_state: &State<BangState>) -> String {

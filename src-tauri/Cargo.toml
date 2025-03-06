@@ -22,3 +22,4 @@ reqwest = { version = "0.12", features = ["json"] }
 urlencoding = "2.1"
 lazy_static = "1.4"
 chrono = { version = "0.4", features = ["serde"] }
+url = "2.5"
