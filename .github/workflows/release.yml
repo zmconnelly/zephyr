@@ -25,6 +25,12 @@ jobs:
       - name: Install frontend dependencies
         run: bun install
 
+      - name: Setup Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+          cache-on-failure: true
+
       - name: Build and release Tauri app
         uses: tauri-apps/tauri-action@v0
         env:
