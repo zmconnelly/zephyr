@@ -20,8 +20,6 @@ const availableBangs = ref<[string, string][]>([]);
 const isRefreshingBangs = ref(false);
 // Flag to show bang info
 const showBangInfo = ref(false);
-// Store the initial Y position to maintain it when resizing
-const initialYPosition = ref<number | null>(null);
 
 // Common search terms for offline suggestions (as fallback)
 const commonSearchTerms = [
@@ -68,12 +66,6 @@ watch(windowHeight, async (newHeight) => {
   try {
     // Use PhysicalSize for proper window resizing
     await appWindow.setSize(new PhysicalSize(750, newHeight));
-    
-    // If we have stored the initial Y position, restore it
-    if (initialYPosition.value !== null) {
-      const position = await appWindow.innerPosition();
-      // await appWindow.setPosition(new PhysicalPosition(position.x, initialYPosition.value));
-    }
   } catch (error) {
     console.error('Failed to resize window:', error);
   }
@@ -97,9 +89,7 @@ onMounted(async () => {
     const position = await appWindow.innerPosition();
     console.log(`Setting position to ${position.x}, ${yPosition}`);
     await appWindow.setPosition(new PhysicalPosition(position.x, yPosition));
-    
-    // Store the initial Y position for future reference
-    initialYPosition.value = yPosition;
+
   } catch (error) {
     console.error('Failed to set initial window size or position:', error);
   }
@@ -435,7 +425,7 @@ async function performSearch() {
             v-for="(suggestion, index) in suggestions" 
             :key="index"
             :class="[
-              'px-4 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150',
+              'px-4 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150 text-gray-900 dark:text-white',
               { 
                 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 font-medium border-l-4 border-blue-500 dark:border-blue-400': index === selectedIndex,
                 'border-l-4 border-transparent': index !== selectedIndex

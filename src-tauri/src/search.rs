@@ -84,8 +84,11 @@ fn get_bang_redirect_url(query: String, bang_state: &State<BangState>) -> String
         }
     }
 
-    // Default to DuckDuckGo if no bang or unrecognized bang
-    format!("https://duckduckgo.com/?q={}", urlencoding::encode(&query))
+    // Default to Google search if no bang or unrecognized bang
+    format!(
+        "https://www.google.com/search?q={}",
+        urlencoding::encode(&query)
+    )
 }
 
 // Add a command to get all available bangs

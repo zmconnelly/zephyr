@@ -42,7 +42,7 @@ pub fn run() {
                 window.on_window_event(move |event| {
                     if let tauri::WindowEvent::Focused(focused) = event {
                         if !focused {
-                            // window_clone.hide().unwrap();
+                            window_clone.hide().unwrap();
                         }
                     }
                 });
