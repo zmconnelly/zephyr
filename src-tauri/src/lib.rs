@@ -1,3 +1,7 @@
+#![allow(deprecated)]
+
+use std::collections::HashMap;
+use std::sync::Mutex;
 use tauri::Manager;
 use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState};
 
@@ -7,6 +11,28 @@ mod search;
 pub fn run() {
     tauri::Builder::default()
         .setup(|app| {
+            // Initialize bangs
+            let app_handle = app.handle().clone();
+
+            // Create initial bang state with fallback bangs
+            let initial_bangs = HashMap::new();
+
+            // Spawn a task to load bangs asynchronously
+            tauri::async_runtime::spawn(async move {
+                let loaded_bangs = bangs::load_all_bangs(&app_handle).await;
+
+                // Update the state with loaded bangs
+                if let Some(state) = app_handle.try_state::<search::BangState>() {
+                    let mut bangs_lock = state.bangs.lock().unwrap();
+                    *bangs_lock = loaded_bangs;
+                }
+            });
+
+            // Register the bang state
+            app.manage(search::BangState {
+                bangs: Mutex::new(initial_bangs),
+            });
+
             // Hide the window at startup
             if let Some(window) = app.get_webview_window("main") {
                 let _ = window.hide();
@@ -16,7 +42,7 @@ pub fn run() {
                 window.on_window_event(move |event| {
                     if let tauri::WindowEvent::Focused(focused) = event {
                         if !focused {
-                            window_clone.hide().unwrap();
+                            // window_clone.hide().unwrap();
                         }
                     }
                 });
@@ -52,8 +78,24 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             search::get_search_suggestions,
             search::search,
-            search::get_available_bangs
+            search::get_available_bangs,
+            search::refresh_bangs,
+            search::add_custom_bang,
+            search::delete_custom_bang,
+            log_to_console
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+}
+
+// Add a new function to handle console logs from the frontend
+#[tauri::command]
+fn log_to_console(level: &str, message: &str) {
+    match level {
+        "error" => eprintln!("[Frontend Error] {}", message),
+        "warn" => println!("[Frontend Warning] {}", message),
+        "info" => println!("[Frontend Info] {}", message),
+        "debug" => println!("[Frontend Debug] {}", message),
+        _ => println!("[Frontend Log] {}", message),
+    }
 }

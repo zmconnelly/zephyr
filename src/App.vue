@@ -2,15 +2,7 @@
 import { ref, watch, onMounted, onUnmounted, computed } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { WebviewWindow } from "@tauri-apps/api/webviewWindow";
-import { PhysicalSize } from "@tauri-apps/api/window";
-
-// Define a type for the window with dynamic properties
-interface ExtendedWindow extends Window {
-  [key: string]: any;
-}
-
-// Cast window to our extended type
-const globalWindow = window as ExtendedWindow;
+import { PhysicalSize, PhysicalPosition } from "@tauri-apps/api/window";
 
 const searchQuery = ref("");
 const searchInput = ref<HTMLInputElement | null>(null);
@@ -24,6 +16,12 @@ const isProgrammaticChange = ref(false);
 const keyHandled = ref(false);
 // Store available bangs
 const availableBangs = ref<[string, string][]>([]);
+// Flag to track if bangs are being refreshed
+const isRefreshingBangs = ref(false);
+// Flag to show bang info
+const showBangInfo = ref(false);
+// Store the initial Y position to maintain it when resizing
+const initialYPosition = ref<number | null>(null);
 
 // Common search terms for offline suggestions (as fallback)
 const commonSearchTerms = [
@@ -61,11 +59,8 @@ const windowHeight = computed(() => {
   // Calculate height based on number of suggestions (each item is about 50px)
   // Limit to a maximum of 8 suggestions visible at once
   const suggestionsHeight = Math.min(suggestions.value.length, 8) * 50;
-  
-  // Add a small buffer for the shadow and to ensure no clipping
-  const buffer = 20;
-  
-  return baseHeight + suggestionsHeight + buffer;
+
+  return baseHeight + suggestionsHeight;
 });
 
 // Watch for changes in window height and resize the window
@@ -73,6 +68,12 @@ watch(windowHeight, async (newHeight) => {
   try {
     // Use PhysicalSize for proper window resizing
     await appWindow.setSize(new PhysicalSize(750, newHeight));
+    
+    // If we have stored the initial Y position, restore it
+    if (initialYPosition.value !== null) {
+      const position = await appWindow.innerPosition();
+      // await appWindow.setPosition(new PhysicalPosition(position.x, initialYPosition.value));
+    }
   } catch (error) {
     console.error('Failed to resize window:', error);
   }
@@ -84,17 +85,27 @@ onMounted(async () => {
   
   // Ensure the window has the correct initial size
   try {
-    await appWindow.setSize(new PhysicalSize(750, windowHeight.value));
+    await appWindow.setSize(new PhysicalSize(900, windowHeight.value));
+    
+    // Position the window 2/3 up from the bottom of the screen
+    const screenHeight = window.screen.height;
+    const winHeight = 150; // Base height
+    const yPosition = Math.round(screenHeight * (1 - 2/3) - winHeight / 2);
+    
+    // Set new position (centered horizontally, 2/3 up from bottom)
+    await appWindow.center();
+    const position = await appWindow.innerPosition();
+    console.log(`Setting position to ${position.x}, ${yPosition}`);
+    await appWindow.setPosition(new PhysicalPosition(position.x, yPosition));
+    
+    // Store the initial Y position for future reference
+    initialYPosition.value = yPosition;
   } catch (error) {
-    console.error('Failed to set initial window size:', error);
+    console.error('Failed to set initial window size or position:', error);
   }
   
   // Load available bangs
-  try {
-    availableBangs.value = await invoke<[string, string][]>("get_available_bangs");
-  } catch (error) {
-    console.error('Error loading bangs:', error);
-  }
+  await loadBangs();
 });
 
 // Clean up event listener when component is unmounted
@@ -108,6 +119,36 @@ appWindow.listen("tauri://focus", () => {
   suggestions.value = [];
   showSuggestions.value = false;
 });
+
+// Function to load bangs
+async function loadBangs() {
+  try {
+    availableBangs.value = await invoke<[string, string][]>("get_available_bangs");
+    console.log(`Loaded ${availableBangs.value.length} bangs`);
+  } catch (error) {
+    console.error('Error loading bangs:', error);
+  }
+}
+
+// Function to refresh bangs from DuckDuckGo
+async function refreshBangs() {
+  if (isRefreshingBangs.value) return;
+  
+  isRefreshingBangs.value = true;
+  try {
+    await invoke("refresh_bangs");
+    await loadBangs();
+    // Show a temporary success message
+    showBangInfo.value = true;
+    setTimeout(() => {
+      showBangInfo.value = false;
+    }, 3000);
+  } catch (error) {
+    console.error('Error refreshing bangs:', error);
+  } finally {
+    isRefreshingBangs.value = false;
+  }
+}
 
 // Debounce function to limit suggestion updates
 function debounce<T extends (...args: any[]) => any>(
@@ -147,13 +188,25 @@ const generateSuggestions = debounce(async (query: string) => {
 
   try {
     // Check if the query ends with a bang pattern
-    const bangMatch = query.match(/!(\w+)$/);
+    const bangMatch = query.match(/!(\w*)$/);
     if (bangMatch) {
       // If we have a partial bang, suggest matching bangs
       const partialBang = bangMatch[1].toLowerCase();
-      const matchingBangs = availableBangs.value
-        .filter(([key, name]) => key.toLowerCase().includes(partialBang) || name.toLowerCase().includes(partialBang))
-        .map(([key, name]) => `${query.substring(0, bangMatch.index)}!${key} (${name})`);
+      
+      // If the bang is empty (just "!"), show all bangs
+      let matchingBangs;
+      if (partialBang === "") {
+        matchingBangs = availableBangs.value
+          .slice(0, 8)
+          .map(([key, name]) => `${query}${key} (${name})`);
+      } else {
+        matchingBangs = availableBangs.value
+          .filter(([key, name]) => 
+            key.toLowerCase().includes(partialBang) || 
+            name.toLowerCase().includes(partialBang)
+          )
+          .map(([key, name]) => `${query.substring(0, bangMatch.index)}!${key} (${name})`);
+      }
       
       if (matchingBangs.length > 0) {
         suggestions.value = matchingBangs.slice(0, 8);
@@ -208,7 +261,7 @@ const generateSuggestions = debounce(async (query: string) => {
   } catch (error) {
     console.error('Error generating suggestions:', error);
   }
-}, 300);
+}, 100);
 
 // Watch for changes in the search query
 watch(searchQuery, (newQuery) => {
@@ -308,6 +361,12 @@ function handleKeyDown(event: KeyboardEvent) {
   if (event.key === 'Escape') {
     appWindow.hide();
   }
+  
+  // Ctrl+R to refresh bangs
+  if (event.key === 'r' && (event.ctrlKey || event.metaKey)) {
+    event.preventDefault();
+    refreshBangs();
+  }
 }
 
 // Function to handle input blur
@@ -328,8 +387,8 @@ async function performSearch() {
 </script>
 
 <template>
-  <main class="flex flex-col items-center pt-4 h-screen w-screen bg-transparent overflow-hidden">
-    <div class="w-full max-w-[700px] px-4 relative">
+  <main class="flex flex-col items-center h-screen w-screen bg-transparent overflow-hidden p-4">
+    <div class="w-full max-w-[700px] relative">
       <form @submit.prevent="performSearch" class="w-full">
         <div class="relative">
           <button
@@ -344,7 +403,7 @@ async function performSearch() {
             ref="searchInput"
             v-model="searchQuery"
             type="text"
-            placeholder="Search..."
+            placeholder="Search... (Type ! for bangs)"
             class="w-full px-4 py-3 pl-10 rounded-lg border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-lg"
             @keydown="handleKeyDown"
             @blur="handleBlur"
@@ -352,13 +411,27 @@ async function performSearch() {
         </div>
       </form>
       
+      <!-- Bang info message -->
+      <div 
+        v-if="showBangInfo" 
+        class="mt-2 px-4 py-2 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-lg shadow-md transition-opacity duration-300"
+      >
+        <div class="flex items-center">
+          <svg class="h-5 w-5 mr-2 text-green-500 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+          </svg>
+          <span>Bangs refreshed! {{ availableBangs.length }} bangs available.</span>
+        </div>
+      </div>
+      
       <!-- Suggestions dropdown (positioned relative to the search container) -->
       <div 
         v-if="showSuggestions" 
-        class="absolute left-0 right-0 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg shadow-lg overflow-hidden z-50"
+        class="absolute inset-x-0 mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg shadow-lg overflow-hidden z-50"
+        style="width: calc(100% - 0px);"
       >
         <ul class="overflow-y-auto max-h-[400px]">
-          <li 
+          <li
             v-for="(suggestion, index) in suggestions" 
             :key="index"
             :class="[

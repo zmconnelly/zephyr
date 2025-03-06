@@ -2,6 +2,7 @@ use chrono::{DateTime, Duration, Utc};
 use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::env;
 use std::fs;
 use std::path::PathBuf;
 use tauri::AppHandle;
@@ -19,7 +20,29 @@ pub struct Bang {
 #[derive(Debug, Serialize, Deserialize)]
 struct BangCache {
     bangs: HashMap<String, Bang>,
+    #[serde(with = "timestamp_seconds")]
     last_updated: DateTime<Utc>,
+}
+
+// Serialization helper for DateTime<Utc>
+mod timestamp_seconds {
+    use chrono::{DateTime, TimeZone, Utc};
+    use serde::{Deserialize, Deserializer, Serializer};
+
+    pub fn serialize<S>(dt: &DateTime<Utc>, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_i64(dt.timestamp())
+    }
+
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<DateTime<Utc>, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let timestamp = i64::deserialize(deserializer)?;
+        Ok(Utc.timestamp_opt(timestamp, 0).unwrap())
+    }
 }
 
 // A small set of fallback bangs in case we can't fetch or load any
@@ -82,20 +105,60 @@ lazy_static! {
 }
 
 // Get paths for cache and user settings
-fn get_cache_path(app_handle: &AppHandle) -> PathBuf {
-    app_handle
-        .path()
-        .app_cache_dir()
-        .unwrap_or_else(|| PathBuf::from("./"))
-        .join("bangs_cache.json")
+fn get_cache_path(_app_handle: &AppHandle) -> PathBuf {
+    let mut path = if let Ok(cache_dir) = env::var("APPDATA") {
+        // Windows
+        PathBuf::from(cache_dir)
+    } else if let Ok(home) = env::var("HOME") {
+        // macOS/Linux
+        let mut p = PathBuf::from(home);
+        if cfg!(target_os = "macos") {
+            p.push("Library/Caches");
+        } else {
+            p.push(".cache");
+        }
+        p
+    } else {
+        PathBuf::from("./")
+    };
+
+    path.push("haku");
+    path.push("bangs_cache.json");
+
+    // Ensure directory exists
+    if let Some(parent) = path.parent() {
+        let _ = fs::create_dir_all(parent);
+    }
+
+    path
 }
 
-fn get_settings_path(app_handle: &AppHandle) -> PathBuf {
-    app_handle
-        .path()
-        .app_config_dir()
-        .unwrap_or_else(|| PathBuf::from("./"))
-        .join("user_bangs.json")
+fn get_settings_path(_app_handle: &AppHandle) -> PathBuf {
+    let mut path = if let Ok(config_dir) = env::var("APPDATA") {
+        // Windows
+        PathBuf::from(config_dir)
+    } else if let Ok(home) = env::var("HOME") {
+        // macOS/Linux
+        let mut p = PathBuf::from(home);
+        if cfg!(target_os = "macos") {
+            p.push("Library/Application Support");
+        } else {
+            p.push(".config");
+        }
+        p
+    } else {
+        PathBuf::from("./")
+    };
+
+    path.push("haku");
+    path.push("user_bangs.json");
+
+    // Ensure directory exists
+    if let Some(parent) = path.parent() {
+        let _ = fs::create_dir_all(parent);
+    }
+
+    path
 }
 
 // Load bangs from cache
@@ -355,4 +418,12 @@ pub fn delete_custom_bang(
 
     // Save user bangs
     save_user_bangs(app_handle, &user_bangs)
+}
+
+// Add this function to get all bangs for the UI
+pub fn get_all_bangs(bangs: &HashMap<String, Bang>) -> Vec<(String, String)> {
+    bangs
+        .iter()
+        .map(|(id, bang)| (id.clone(), bang.name.clone()))
+        .collect()
 }
