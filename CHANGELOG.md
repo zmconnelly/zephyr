@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/zmconnelly/zephyr/compare/v1.0.1...v1.1.0) (2025-03-07)
+
+
+### Features
+
+* icons and tray menu ([a46ab65](https://github.com/zmconnelly/zephyr/commit/a46ab658dc7f022aa4be263486f5797caf21a596))
+
 ## [1.0.1](https://github.com/zmconnelly/zephyr/compare/v1.0.0...v1.0.1) (2025-03-06)
 
 
