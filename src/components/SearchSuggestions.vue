@@ -30,7 +30,6 @@ function emitHighlight() {
 
 function handleMouseEnter(index: number) {
   selectedIndex.value = index;
-  emitHighlight();
 }
 
 function handleClick(suggestion: string) {

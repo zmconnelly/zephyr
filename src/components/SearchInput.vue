@@ -21,7 +21,6 @@ function updateValue(event: Event) {
 }
 
 function handleKeyDown(event: KeyboardEvent) {
-  // Handle all key presses in the parent
   emit('keydown', event);
 }
 
