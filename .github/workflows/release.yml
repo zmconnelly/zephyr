@@ -50,6 +50,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
+          appVersion: ${{ steps.semantic.outputs.new_release_version }} # Set the app version directly
           tagName: v${{ steps.semantic.outputs.new_release_version }} # Use the version from semantic-release
           releaseName: "Release v${{ steps.semantic.outputs.new_release_version }}" # Use the version from semantic-release
           releaseBody: ${{ steps.semantic.outputs.new_release_notes }} # Use the release notes from semantic-release
