@@ -1,3 +1,10 @@
+## [1.1.2](https://github.com/zmconnelly/zephyr/compare/v1.1.1...v1.1.2) (2025-03-07)
+
+
+### Bug Fixes
+
+* tauri default to package.json for version ([d724124](https://github.com/zmconnelly/zephyr/commit/d724124bbc5a22d59302efb0b2b1b4bba4cee7c6))
+
 ## [1.1.1](https://github.com/zmconnelly/zephyr/compare/v1.1.0...v1.1.1) (2025-03-07)
 
 
