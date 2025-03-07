@@ -6,7 +6,7 @@ const originalConsole = {
   info: console.info,
   warn: console.warn,
   error: console.error,
-  debug: console.debug
+  debug: console.debug,
 };
 
 export function restoreConsole() {
@@ -18,23 +18,25 @@ export function restoreConsole() {
 }
 
 function formatMessage(args: any[]): string {
-  return args.map(arg => {
-    if (typeof arg === 'object') {
-      try {
-        return JSON.stringify(arg);
-      } catch (e) {
-        return String(arg);
+  return args
+    .map((arg) => {
+      if (typeof arg === 'object') {
+        try {
+          return JSON.stringify(arg);
+        } catch (e) {
+          return String(arg);
+        }
       }
-    }
-    return String(arg);
-  }).join(' ');
+      return String(arg);
+    })
+    .join(' ');
 }
 
 export function setupConsoleRedirect() {
   console.log = (...args: any[]) => {
     const message = formatMessage(args);
     originalConsole.log(...args);
-    invoke('log_to_console', { level: 'log', message }).catch(err => {
+    invoke('log_to_console', { level: 'log', message }).catch((err) => {
       originalConsole.error('Failed to send log to Rust backend:', err);
     });
   };
@@ -42,7 +44,7 @@ export function setupConsoleRedirect() {
   console.info = (...args: any[]) => {
     const message = formatMessage(args);
     originalConsole.info(...args);
-    invoke('log_to_console', { level: 'info', message }).catch(err => {
+    invoke('log_to_console', { level: 'info', message }).catch((err) => {
       originalConsole.error('Failed to send info to Rust backend:', err);
     });
   };
@@ -50,7 +52,7 @@ export function setupConsoleRedirect() {
   console.warn = (...args: any[]) => {
     const message = formatMessage(args);
     originalConsole.warn(...args);
-    invoke('log_to_console', { level: 'warn', message }).catch(err => {
+    invoke('log_to_console', { level: 'warn', message }).catch((err) => {
       originalConsole.error('Failed to send warning to Rust backend:', err);
     });
   };
@@ -58,7 +60,7 @@ export function setupConsoleRedirect() {
   console.error = (...args: any[]) => {
     const message = formatMessage(args);
     originalConsole.error(...args);
-    invoke('log_to_console', { level: 'error', message }).catch(err => {
+    invoke('log_to_console', { level: 'error', message }).catch((err) => {
       originalConsole.error('Failed to send error to Rust backend:', err);
     });
   };
@@ -66,10 +68,10 @@ export function setupConsoleRedirect() {
   console.debug = (...args: any[]) => {
     const message = formatMessage(args);
     originalConsole.debug(...args);
-    invoke('log_to_console', { level: 'debug', message }).catch(err => {
+    invoke('log_to_console', { level: 'debug', message }).catch((err) => {
       originalConsole.error('Failed to send debug to Rust backend:', err);
     });
   };
 
-  console.info("Vue app started");
+  console.info('Vue app started');
 }

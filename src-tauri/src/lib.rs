@@ -80,9 +80,7 @@ pub fn run() {
                         .with_handler(move |_app, _shortcut, event| {
                             if let ShortcutState::Pressed = event.state() {
                                 if let Some(window) = app_handle.get_webview_window("main") {
-                                    if window.is_visible().unwrap_or(false) {
-                                        let _ = window.hide();
-                                    } else {
+                                    if !window.is_visible().unwrap_or(false) {
                                         let _ = window.show();
                                         let _ = window.set_focus();
                                     }
