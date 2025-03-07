@@ -6,7 +6,7 @@
   "build": {
     "beforeDevCommand": "bun run vite",
     "devUrl": "http://localhost:1420",
-    "beforeBuildCommand": "bun run build",
+    "beforeBuildCommand": "bun run vue-tsc --noEmit && vite build",
     "frontendDist": "../dist"
   },
   "app": {
@@ -27,11 +27,6 @@
     ],
     "security": {
       "csp": null
-    },
-    "trayIcon": {
-      "iconPath": "icons/32x32.png",
-      "iconAsTemplate": true,
-      "tooltip": "Zephyr Search"
     }
   },
   "bundle": {

@@ -2,7 +2,11 @@
 
 use std::collections::HashMap;
 use std::sync::Mutex;
-use tauri::Manager;
+use tauri::{
+    menu::{Menu, MenuItem},
+    tray::TrayIconBuilder,
+    Manager,
+};
 use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState};
 
 mod bangs;
@@ -11,6 +15,24 @@ mod search;
 pub fn run() {
     tauri::Builder::default()
         .setup(|app| {
+            let quit_i = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
+            let menu = Menu::with_items(app, &[&quit_i])?;
+
+            TrayIconBuilder::new()
+                .menu(&menu)
+                .menu_on_left_click(true)
+                .icon(app.default_window_icon().unwrap().clone())
+                .on_menu_event(|app, event| match event.id.as_ref() {
+                    "quit" => {
+                        println!("Quitting application...");
+                        app.exit(0);
+                    }
+                    _ => {
+                        println!("Menu item {:?} not handled", event.id);
+                    }
+                })
+                .build(app)?;
+
             // Initialize bangs
             let app_handle = app.handle().clone();
 
