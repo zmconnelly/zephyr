@@ -16,6 +16,7 @@
 
 - Bang search catelog sucks
 - Initial suggestions are slow compared to next updates
+- Event doesnt propagate for shortcut when window is already open
 
 ### Feature Ideas
 
