@@ -1,3 +1,10 @@
+# [1.2.0](https://github.com/zmconnelly/zephyr/compare/v1.1.2...v1.2.0) (2025-03-07)
+
+
+### Features
+
+* bump version ([2f91e83](https://github.com/zmconnelly/zephyr/commit/2f91e83486ef0992534c07aa1fb7465bdeec2ff4))
+
 ## [1.1.2](https://github.com/zmconnelly/zephyr/compare/v1.1.1...v1.1.2) (2025-03-07)
 
 ### Bug Fixes
