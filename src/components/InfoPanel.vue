@@ -3,7 +3,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { defineProps } from 'vue';
 
 defineProps<{
-  showBangInfo: boolean;
+  show: boolean;
   bangsCount: number;
   availableBangs: [string, string][];
 }>();
@@ -38,8 +38,8 @@ async function openUrl(url: string) {
 </script>
 
 <template>
-  <div 
-    v-if="showBangInfo" 
+  <div
+    v-if="show"
     class="mt-2 px-4 py-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg shadow-lg transition-opacity duration-300 max-h-[400px] overflow-y-auto"
   >
     <!-- Info header -->
@@ -63,8 +63,8 @@ async function openUrl(url: string) {
     </div>
     
     <!-- Footer text -->
-    <div v-if="availableBangs.length > 20" class="mt-3 text-center text-sm text-gray-500 dark:text-gray-400">
-      {{ availableBangs.length - 20 }} more bangs available. Type ! in the search box to see more.
+    <div v-if="bangsCount > 20" class="mt-3 text-center text-sm text-gray-500 dark:text-gray-400">
+      {{ bangsCount - 20 }} more bangs available. Type ! in the search box to see more.
     </div>
   </div>
 </template> 

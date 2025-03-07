@@ -24,7 +24,6 @@ pub async fn get_search_suggestions(query: String) -> Result<Vec<String>, String
         urlencoding::encode(&query)
     );
 
-    // Fetch suggestions
     match reqwest::get(&url).await {
         Ok(response) => {
             if response.status().is_success() {
@@ -36,6 +35,7 @@ pub async fn get_search_suggestions(query: String) -> Result<Vec<String>, String
                                 .iter()
                                 .filter_map(|s| s.as_str().map(|s| s.to_string()))
                                 .collect();
+                            println!("Found {} suggestions", result.len());
                             return Ok(result);
                         }
                         Ok(vec![])

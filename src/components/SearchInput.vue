@@ -21,14 +21,17 @@ function updateValue(event: Event) {
 }
 
 function handleKeyDown(event: KeyboardEvent) {
+  // Handle all key presses in the parent
   emit('keydown', event);
 }
 
 function handleBlur() {
-  emit('blur');
+  setTimeout(() => {
+    emit('blur');
+  }, 150);
 }
 
-function toggleInfo() {
+function toggleInfoPanel() {
   emit('toggleInfo');
 }
 
@@ -36,8 +39,16 @@ function focus() {
   searchInput.value?.focus();
 }
 
+function setValue(value: string) {
+  if (searchInput.value) {
+    searchInput.value.value = value;
+    emit('update:modelValue', value);
+  }
+}
+
 defineExpose({
-  focus
+  focus,
+  setValue
 });
 </script>
 
@@ -64,7 +75,7 @@ defineExpose({
       />
       <button
         type="button"
-        @click.prevent="toggleInfo"
+        @click.prevent="toggleInfoPanel"
         class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 focus:outline-none"
         title="Learn more"
       >
