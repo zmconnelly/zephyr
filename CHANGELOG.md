@@ -1,3 +1,11 @@
+## [1.2.1](https://github.com/zmconnelly/zephyr/compare/v1.2.0...v1.2.1) (2025-03-08)
+
+
+### Bug Fixes
+
+* cleanup workflow ([85ce808](https://github.com/zmconnelly/zephyr/commit/85ce808226bb45bad9f6a8087187ec14c9190590))
+* fkin chat gpty ([b5e2c6f](https://github.com/zmconnelly/zephyr/commit/b5e2c6fe475bb0989892bd5abce199dbdc3334d3))
+
 # [1.2.0](https://github.com/zmconnelly/zephyr/compare/v1.1.2...v1.2.0) (2025-03-07)
 
 
