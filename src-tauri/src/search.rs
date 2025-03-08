@@ -1,4 +1,5 @@
 use crate::bangs;
+use crate::logger;
 use std::collections::HashMap;
 use std::process::Command;
 use std::sync::Mutex;
@@ -16,7 +17,7 @@ pub async fn get_search_suggestions(query: String) -> Result<Vec<String>, String
         return Ok(vec![]);
     }
 
-    println!("Getting suggestions: '{}'", query);
+    logger::info(&format!("Getting suggestions: '{}'", query));
 
     // Google's suggestion API URL
     let url = format!(
@@ -35,7 +36,7 @@ pub async fn get_search_suggestions(query: String) -> Result<Vec<String>, String
                                 .iter()
                                 .filter_map(|s| s.as_str().map(|s| s.to_string()))
                                 .collect();
-                            println!("Found {} suggestions", result.len());
+                            logger::info(&format!("Found {} suggestions", result.len()));
                             return Ok(result);
                         }
                         Ok(vec![])
@@ -61,7 +62,7 @@ pub async fn search(query: String, bang_state: State<'_, BangState>) -> Result<(
         get_bang_redirect_url(query, &bang_state)
     };
 
-    println!("Opening URL: {}", url);
+    logger::info(&format!("Opening URL: {}", url));
 
     // Spawn browser process
     #[cfg(target_os = "windows")]

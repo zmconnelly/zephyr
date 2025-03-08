@@ -3,12 +3,16 @@
 
 use std::panic;
 
+mod logger;
+
 fn main() {
+    logger::init();
+
     panic::set_hook(Box::new(|panic_info| {
-        println!("Panic occurred: {:?}", panic_info);
+        logger::error(&format!("Panic occurred: {:?}", panic_info));
     }));
 
     if let Err(e) = std::panic::catch_unwind(|| zephyr_lib::run()) {
-        println!("Application crashed: {:?}", e);
+        logger::error(&format!("Application crashed: {:?}", e));
     }
 }

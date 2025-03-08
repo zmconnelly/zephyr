@@ -1,3 +1,4 @@
+use crate::logger;
 use chrono::{DateTime, Duration, Utc};
 use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
@@ -338,7 +339,7 @@ pub async fn load_all_bangs(app_handle: &AppHandle) -> HashMap<String, Bang> {
                 });
             }
             Err(e) => {
-                println!("Error fetching bangs: {}", e);
+                logger::error(&format!("Error fetching bangs: {}", e));
                 // If we have no bangs at all, use fallbacks
                 if bangs.is_empty() {
                     bangs = FALLBACK_BANGS.clone();
