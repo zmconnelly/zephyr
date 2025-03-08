@@ -117,6 +117,8 @@ async fn update(app: tauri::AppHandle) -> tauri_plugin_updater::Result<()> {
 }
 
 pub fn run() {
+    println!("Zephyr v{}", env!("CARGO_PKG_VERSION"));
+
     tauri::Builder::default()
         .plugin(tauri_plugin_updater::Builder::new().build())
         .setup(|app| {
@@ -125,8 +127,19 @@ pub fn run() {
                 update(handle).await.unwrap();
             });
 
-            let quit_i = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
-            let menu = Menu::with_items(app, &[&quit_i])?;
+            let version = app.package_info().version.to_string();
+
+            let version_item = MenuItem::with_id(
+                &app.handle().clone(),
+                "version",
+                format!("Version: {}", version),
+                false,
+                None::<&str>,
+            )
+            .unwrap();
+
+            let quit_item = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
+            let menu = Menu::with_items(app, &[&version_item, &quit_item])?;
 
             TrayIconBuilder::new()
                 .menu(&menu)
@@ -136,6 +149,9 @@ pub fn run() {
                     "quit" => {
                         println!("Quitting application...");
                         app.exit(0);
+                    }
+                    "version" => {
+                        println!("Version: {}", env!("CARGO_PKG_VERSION"));
                     }
                     _ => {
                         println!("Menu item {:?} not handled", event.id);
