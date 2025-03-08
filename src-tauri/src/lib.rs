@@ -8,6 +8,7 @@ use tauri::{
     Manager,
 };
 use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState};
+use tauri_plugin_updater::UpdaterExt;
 use winreg::enums::*;
 use winreg::RegKey;
 
@@ -83,9 +84,47 @@ mod startup {
     }
 }
 
+#[tauri::command]
+async fn update(app: tauri::AppHandle) -> tauri_plugin_updater::Result<()> {
+    if let Some(update) = app.updater()?.check().await? {
+        println!(
+            "New verion found: {} Current version: {}",
+            update.version, update.current_version
+        );
+
+        let mut downloaded = 0;
+
+        // alternatively we could also call update.download() and update.install() separately
+        update
+            .download_and_install(
+                |chunk_length, content_length| {
+                    downloaded += chunk_length;
+                    println!("downloaded {downloaded} from {content_length:?}");
+                },
+                || {
+                    println!("download finished");
+                },
+            )
+            .await?;
+
+        println!("update installed");
+        app.restart();
+    } else {
+        println!("No update found");
+    }
+
+    Ok(())
+}
+
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .setup(|app| {
+            let handle = app.handle().clone();
+            tauri::async_runtime::spawn(async move {
+                update(handle).await.unwrap();
+            });
+
             let quit_i = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
             let menu = Menu::with_items(app, &[&quit_i])?;
 
@@ -176,7 +215,8 @@ pub fn run() {
             search::open_url,
             startup::get_startup_status,
             startup::toggle_run_at_startup,
-            log_to_console
+            log_to_console,
+            update,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

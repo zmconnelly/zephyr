@@ -3,7 +3,6 @@
   import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
   import { scaleWindow, setIntialPosition } from './utils/windowUtils';
   import { executeSearch, getAvailableBangs, getSearchSuggestions } from './utils/api';
-  import { checkUpdate } from '@tauri-apps/api/updater';
 
   // Components
   import SearchInput from './components/SearchInput.vue';
@@ -62,9 +61,6 @@
   onMounted(async () => {
     await setIntialPosition();
     bangs.value = await getAvailableBangs();
-    
-    // Check for updates
-    checkForUpdates();
   });
 
   // Window event listeners
@@ -204,18 +200,6 @@
     showSettingsPanel.value = !showSettingsPanel.value;
     showSuggestions.value = false;
     showInfoPanel.value = false;
-  }
-
-  async function checkForUpdates() {
-    try {
-      const { shouldUpdate, manifest } = await checkUpdate();
-      if (shouldUpdate) {
-        console.log(`Update available: ${manifest?.version}`);
-        // The dialog will be shown automatically since dialog: true in config
-      }
-    } catch (error) {
-      console.error('Error checking for updates:', error);
-    }
   }
 </script>
 

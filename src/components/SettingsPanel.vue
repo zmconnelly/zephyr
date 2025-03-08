@@ -42,6 +42,16 @@ async function toggleRunAtStartup() {
     isLoading.value = false;
   }
 }
+
+async function checkForUpdates() {
+  try {
+    const result = await invoke('update');
+    console.log('Update check result:', result);
+  } catch (error) {
+    console.error('Failed to check for updates:', error);
+  }
+}
+
 </script>
 
 <template>
@@ -80,8 +90,15 @@ async function toggleRunAtStartup() {
           ></label>
         </div>
       </div>
-      
+
+      <div class="flex items-center justify-between">
+        <span class="text-gray-700 dark:text-gray-300">Check for updates</span>
+        <button @click="checkForUpdates" :disabled="isLoading" class="bg-indigo-500 text-white px-4 py-2 rounded-md hover:bg-indigo-600 transition-colors duration-300 ease-in-out">
+          {{ isLoading ? 'Checking...' : 'Check' }}
+        </button>
+      </div>
+
       <!-- Add more settings here as needed -->
     </div>
   </div>
-</template> 
+</template>

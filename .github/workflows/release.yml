@@ -1,8 +1,8 @@
 name: Release
 on:
   push:
-    tags:
-      - 'v*'
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
@@ -17,6 +17,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Important for semantic-release to analyze commit history
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -24,11 +26,22 @@ jobs:
           node-version: 20
           cache: 'npm'
 
-      - name: Install dependencies
-        run: npm install
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install frontend dependencies
+        run: bun install
 
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
+
+      - name: Setup Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+          cache-on-failure: true
 
       - name: Install dependencies (Windows only)
         if: matrix.platform == 'windows-latest'
@@ -38,24 +51,37 @@ jobs:
           rustflags = ["-C", "target-feature=+crt-static"]
           "@
 
-      - name: Build the app
+      - name: Semantic Release
+        id: semantic
+        uses: cycjimmy/semantic-release-action@v4
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          semantic_version: 19
+          extra_plugins: |
+            @semantic-release/git
+            @semantic-release/changelog
+
+      - name: Build and release Tauri app
+        if: steps.semantic.outputs.new_release_published == 'true' # Only build if a new version was published
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
         with:
-          tagName: ${{ github.ref_name }}
-          releaseName: 'Zephyr v__VERSION__'
-          releaseBody: 'See the assets to download and install this version.'
-          releaseDraft: true
+          tagName: v${{ steps.semantic.outputs.new_release_version }} # Use the version from semantic-release
+          releaseName: 'Release v${{ steps.semantic.outputs.new_release_version }}' # Use the version from semantic-release
+          releaseBody: ${{ steps.semantic.outputs.new_release_notes }} # Use the release notes from semantic-release
+          releaseDraft: false
           prerelease: false
 
       - name: Create update manifest
+        if: steps.semantic.outputs.new_release_published == 'true'
         id: create_manifest
         run: |
-          # Get the version from package.json
-          $version = (Get-Content -Raw -Path package.json | ConvertFrom-Json).version
+          # Get the version from semantic-release
+          $version = "${{ steps.semantic.outputs.new_release_version }}"
 
           # Get the release assets
           $exePath = "src-tauri/target/release/bundle/nsis/zephyr-$version-setup.exe"
@@ -67,9 +93,9 @@ jobs:
           # Create the update manifest
           $manifest = @{
             version = $version
-            notes = "See the release notes on GitHub"
+            notes = "${{ steps.semantic.outputs.new_release_notes }}"
             pub_date = (Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ")
-            url = "https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/zephyr-$version-setup.exe"
+            url = "https://github.com/${{ github.repository }}/releases/download/v$version/zephyr-$version-setup.exe"
             signature = $signature.Trim()
           } | ConvertTo-Json
 
@@ -78,7 +104,9 @@ jobs:
         shell: pwsh
 
       - name: Upload update manifest
+        if: steps.semantic.outputs.new_release_published == 'true'
         uses: softprops/action-gh-release@v1
         with:
+          tag_name: v${{ steps.semantic.outputs.new_release_version }}
           files: latest.json
           token: ${{ secrets.GITHUB_TOKEN }}
