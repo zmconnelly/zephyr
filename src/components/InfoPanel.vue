@@ -1,6 +1,5 @@
 <script setup lang="ts">
   import { invoke } from '@tauri-apps/api/core';
-  import { defineProps } from 'vue';
 
   defineProps<{
     show: boolean;

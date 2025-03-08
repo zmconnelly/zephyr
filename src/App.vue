@@ -3,11 +3,13 @@
   import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
   import { scaleWindow, setIntialPosition } from './utils/windowUtils';
   import { executeSearch, getAvailableBangs, getSearchSuggestions } from './utils/api';
+  import { checkUpdate } from '@tauri-apps/api/updater';
 
   // Components
   import SearchInput from './components/SearchInput.vue';
   import SearchSuggestions from './components/SearchSuggestions.vue';
   import InfoPanel from './components/InfoPanel.vue';
+  import SettingsPanel from './components/SettingsPanel.vue';
 
   // Type definitions
   type SearchSuggestionsInstance = InstanceType<typeof SearchSuggestions> & {
@@ -25,6 +27,7 @@
   const searchSuggestions = ref<string[]>([]);
   const showSuggestions = ref(false);
   const showInfoPanel = ref(false);
+  const showSettingsPanel = ref(false);
   const isProgrammaticUpdate = ref(false);
 
   // Data
@@ -40,6 +43,8 @@
       return { type: 'suggestions', count: searchSuggestions.value.length };
     } else if (showInfoPanel.value) {
       return { type: 'infoPanel', count: 9 };
+    } else if (showSettingsPanel.value) {
+      return { type: 'settingsPanel', count: 5 };
     } else {
       return { type: 'default', count: 0 };
     }
@@ -57,6 +62,9 @@
   onMounted(async () => {
     await setIntialPosition();
     bangs.value = await getAvailableBangs();
+    
+    // Check for updates
+    checkForUpdates();
   });
 
   // Window event listeners
@@ -189,6 +197,25 @@
   function toggleInfoPanel() {
     showInfoPanel.value = !showInfoPanel.value;
     showSuggestions.value = false;
+    showSettingsPanel.value = false;
+  }
+
+  function toggleSettingsPanel() {
+    showSettingsPanel.value = !showSettingsPanel.value;
+    showSuggestions.value = false;
+    showInfoPanel.value = false;
+  }
+
+  async function checkForUpdates() {
+    try {
+      const { shouldUpdate, manifest } = await checkUpdate();
+      if (shouldUpdate) {
+        console.log(`Update available: ${manifest?.version}`);
+        // The dialog will be shown automatically since dialog: true in config
+      }
+    } catch (error) {
+      console.error('Error checking for updates:', error);
+    }
   }
 </script>
 
@@ -202,6 +229,7 @@
         @keydown="handleKeyDown"
         @blur="handleBlur"
         @toggleInfo="toggleInfoPanel"
+        @toggleSettings="toggleSettingsPanel"
       />
 
       <SearchSuggestions
@@ -213,6 +241,11 @@
       />
 
       <InfoPanel :show="showInfoPanel" :bangs-count="bangs.length" :available-bangs="bangs" />
+      
+      <SettingsPanel 
+        :show="showSettingsPanel" 
+        @close="showSettingsPanel = false" 
+      />
     </div>
   </main>
 </template>

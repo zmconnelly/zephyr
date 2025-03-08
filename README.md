@@ -1,6 +1,4 @@
-# Zephyr
-
-**One search to rule them all**
+# Zephyr - One Search to Rule Them All
 
 Zephyr is a lightweight desktop search bar baked with with all the power of DuckDuckGo's [bangs](https://duckduckgo.com/bangs).
 

@@ -8,9 +8,80 @@ use tauri::{
     Manager,
 };
 use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState};
+use winreg::enums::*;
+use winreg::RegKey;
 
 mod bangs;
 mod search;
+
+// Add a new module for startup settings
+mod startup {
+    use super::*;
+    use serde::{Deserialize, Serialize};
+    use std::env;
+
+    #[derive(Debug, Serialize, Deserialize)]
+    pub struct StartupStatus {
+        pub enabled: bool,
+    }
+
+    #[tauri::command]
+    pub fn get_startup_status() -> Result<StartupStatus, String> {
+        let hkcu = RegKey::predef(HKEY_CURRENT_USER);
+        let run_key = match hkcu.open_subkey("Software\\Microsoft\\Windows\\CurrentVersion\\Run") {
+            Ok(key) => key,
+            Err(_) => return Ok(StartupStatus { enabled: false }),
+        };
+
+        // Check if our app is in the startup registry
+        let is_enabled = run_key.get_value::<String, _>("Zephyr").is_ok();
+
+        Ok(StartupStatus {
+            enabled: is_enabled,
+        })
+    }
+
+    #[tauri::command]
+    pub fn toggle_run_at_startup(enable: bool) -> Result<StartupStatus, String> {
+        println!("Toggling run at startup: {}", enable);
+
+        let hkcu = RegKey::predef(HKEY_CURRENT_USER);
+
+        // Open or create the Run registry key
+        let run_key_result = hkcu.open_subkey_with_flags(
+            "Software\\Microsoft\\Windows\\CurrentVersion\\Run",
+            KEY_WRITE,
+        );
+
+        let run_key = match run_key_result {
+            Ok(key) => key,
+            Err(_) => {
+                // Create the key if it doesn't exist
+                let (key, _) = hkcu
+                    .create_subkey("Software\\Microsoft\\Windows\\CurrentVersion\\Run")
+                    .map_err(|e| e.to_string())?;
+                key
+            }
+        };
+
+        if enable {
+            // Get path to the executable using env::current_exe()
+            let exe_path = env::current_exe()
+                .map_err(|e| e.to_string())?
+                .to_string_lossy()
+                .to_string();
+
+            run_key
+                .set_value("Zephyr", &exe_path)
+                .map_err(|e| e.to_string())?;
+        } else {
+            // Remove from startup
+            let _ = run_key.delete_value("Zephyr"); // Ignore errors if value doesn't exist
+        }
+
+        Ok(StartupStatus { enabled: enable })
+    }
+}
 
 pub fn run() {
     tauri::Builder::default()
@@ -103,6 +174,8 @@ pub fn run() {
             search::add_custom_bang,
             search::delete_custom_bang,
             search::open_url,
+            startup::get_startup_status,
+            startup::toggle_run_at_startup,
             log_to_console
         ])
         .run(tauri::generate_context!())

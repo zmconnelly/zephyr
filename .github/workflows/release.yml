@@ -1,8 +1,9 @@
 name: Release
 on:
   push:
-    branches:
-      - main
+    tags:
+      - 'v*'
+  workflow_dispatch:
 
 jobs:
   release:
@@ -16,42 +17,68 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
-          fetch-depth: 0 # Important for semantic-release to analyze commit history
+          node-version: 20
+          cache: 'npm'
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
+      - name: Install dependencies
+        run: npm install
 
-      - name: Install frontend dependencies
-        run: bun install
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
 
-      - name: Setup Rust cache
-        uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: src-tauri
-          cache-on-failure: true
+      - name: Install dependencies (Windows only)
+        if: matrix.platform == 'windows-latest'
+        run: |
+          New-Item -Path ".\.cargo" -Name "config" -ItemType "file" -Value @"
+          [target.x86_64-pc-windows-msvc]
+          rustflags = ["-C", "target-feature=+crt-static"]
+          "@
 
-      - name: Semantic Release
-        id: semantic
-        uses: cycjimmy/semantic-release-action@v4
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          semantic_version: 19
-          extra_plugins: |
-            @semantic-release/git
-            @semantic-release/changelog
-
-      - name: Build and release Tauri app
-        if: steps.semantic.outputs.new_release_published == 'true' # Only build if a new version was published
+      - name: Build the app
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
         with:
-          tagName: v${{ steps.semantic.outputs.new_release_version }} # Use the version from semantic-release
-          releaseName: 'Release v${{ steps.semantic.outputs.new_release_version }}' # Use the version from semantic-release
-          releaseBody: ${{ steps.semantic.outputs.new_release_notes }} # Use the release notes from semantic-release
-          releaseDraft: false
+          tagName: ${{ github.ref_name }}
+          releaseName: 'Zephyr v__VERSION__'
+          releaseBody: 'See the assets to download and install this version.'
+          releaseDraft: true
           prerelease: false
+
+      - name: Create update manifest
+        id: create_manifest
+        run: |
+          # Get the version from package.json
+          $version = (Get-Content -Raw -Path package.json | ConvertFrom-Json).version
+
+          # Get the release assets
+          $exePath = "src-tauri/target/release/bundle/nsis/zephyr-$version-setup.exe"
+          $sigPath = "$exePath.sig"
+
+          # Read the signature
+          $signature = Get-Content -Raw -Path $sigPath
+
+          # Create the update manifest
+          $manifest = @{
+            version = $version
+            notes = "See the release notes on GitHub"
+            pub_date = (Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ")
+            url = "https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/zephyr-$version-setup.exe"
+            signature = $signature.Trim()
+          } | ConvertTo-Json
+
+          # Save the manifest
+          $manifest | Out-File -FilePath "latest.json" -Encoding utf8
+        shell: pwsh
+
+      - name: Upload update manifest
+        uses: softprops/action-gh-release@v1
+        with:
+          files: latest.json
+          token: ${{ secrets.GITHUB_TOKEN }}
