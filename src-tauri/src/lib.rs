@@ -17,36 +17,7 @@ mod key_listener;
 mod logger;
 mod search;
 mod startup;
-
-#[tauri::command]
-async fn update(app: tauri::AppHandle) -> tauri_plugin_updater::Result<()> {
-    logger::info("Checking for updates...");
-
-    let updater = app.updater()?;
-    match updater.check().await {
-        Ok(Some(update)) => {
-            logger::info(&format!(
-                "Update found: {} (current: {})",
-                update.version,
-                env!("CARGO_PKG_VERSION")
-            ));
-
-            match update.download_and_install(|_, _| {}, || {}).await {
-                Ok(_) => logger::info("Update installed successfully"),
-                Err(e) => logger::error(&format!("Failed to install update: {}", e)),
-            }
-        }
-        Ok(None) => {
-            logger::info("No updates available");
-        }
-        Err(e) => {
-            logger::error(&format!("Error checking for updates: {}", e));
-            return Err(e);
-        }
-    }
-
-    Ok(())
-}
+mod updater;
 
 pub fn run() {
     logger::info(&format!("Starting Zephyr v{}", env!("CARGO_PKG_VERSION")));
