@@ -1,16 +1,19 @@
 #![allow(deprecated)]
 
-use std::collections::HashMap;
+use std::env;
 use std::sync::Mutex;
+use std::{collections::HashMap, sync::Arc};
 use tauri::{
     menu::{Menu, MenuItem},
     tray::TrayIconBuilder,
     Manager,
 };
-use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState};
-use tauri_plugin_updater::UpdaterExt;
+// use windows_key_listener::KeyListener;
+// use windows_key_listener::KeyListener;
 
 mod bangs;
+mod key_chord_parser;
+mod key_listener;
 mod logger;
 mod search;
 mod startup;
@@ -52,10 +55,36 @@ pub fn run() {
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_shell::init())
         .setup(|app| {
-            // Check for updates
-            let handle = app.handle().clone();
+            let key_listener = key_listener::KeyListener::new();
+
+            let app_handle = app.handle().clone();
+
+            key_listener.listen(
+                "Shift+Space",
+                std::time::Duration::from_millis(500),
+                Arc::new(move || {
+                    logger::info("Shift + Space key chord pressed");
+
+                    // return false;
+
+                    if let Some(window) = app_handle.get_webview_window("main") {
+                        if !window.is_visible().unwrap_or(false) {
+                            let _ = window.show();
+                            let _ = window.set_focus();
+                            return true;
+                        }
+                    }
+                    // Return false to allow the event to propagate, true to block it
+                    return false;
+                }),
+            );
+            // Check for updates on startup
+            let app_handle = app.handle().clone();
             tauri::async_runtime::spawn(async move {
-                if let Err(e) = update(handle).await {
+                // Wait a bit before checking for updates
+                std::thread::sleep(std::time::Duration::from_secs(5));
+
+                if let Err(e) = updater::check_for_updates(app_handle).await {
                     logger::error(&format!("Update check failed: {}", e));
                 }
             });
@@ -97,6 +126,13 @@ pub fn run() {
                     }
                     "version" => {
                         logger::info(&format!("Version: {}", env!("CARGO_PKG_VERSION")));
+                        // Check for updates when version is clicked
+                        let app_handle = app.clone();
+                        tauri::async_runtime::spawn(async move {
+                            if let Err(e) = updater::check_for_updates(app_handle).await {
+                                logger::error(&format!("Update check failed: {}", e));
+                            }
+                        });
                     }
                     "open_logs" => {
                         logger::info("Opening logs folder...");
@@ -148,26 +184,26 @@ pub fn run() {
             }
 
             {
-                let open_shortcut = Shortcut::new(Some(Modifiers::SHIFT), Code::Space);
+                // let open_shortcut = Shortcut::new(Some(Modifiers::SHIFT), Code::Space);
 
-                let app_handle = app.handle().clone();
+                // let app_handle = app.handle().clone();
 
-                app.handle().plugin(
-                    tauri_plugin_global_shortcut::Builder::new()
-                        .with_handler(move |_app, _shortcut, event| {
-                            if let ShortcutState::Pressed = event.state() {
-                                if let Some(window) = app_handle.get_webview_window("main") {
-                                    if !window.is_visible().unwrap_or(false) {
-                                        let _ = window.show();
-                                        let _ = window.set_focus();
-                                    }
-                                }
-                            }
-                        })
-                        .build(),
-                )?;
+                // app.handle().plugin(
+                //     tauri_plugin_global_shortcut::Builder::new()
+                //         .with_handler(move |_app, _shortcut, event| {
+                //             if let ShortcutState::Pressed = event.state() {
+                //                 if let Some(window) = app_handle.get_webview_window("main") {
+                //                     if !window.is_visible().unwrap_or(false) {
+                //                         let _ = window.show();
+                //                         let _ = window.set_focus();
+                //                     }
+                //                 }
+                //             }
+                //         })
+                //         .build(),
+                // )?;
 
-                app.global_shortcut().register(open_shortcut)?;
+                // app.global_shortcut().register(open_shortcut)?;
             }
 
             Ok(())
@@ -182,7 +218,11 @@ pub fn run() {
             search::open_url,
             startup::get_startup_status,
             startup::toggle_run_at_startup,
-            update,
+            updater::check_for_updates,
+            updater::set_github_token,
+            updater::get_github_token,
+            updater::update_github_url,
+            updater::test_github_token,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

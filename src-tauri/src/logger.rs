@@ -80,33 +80,77 @@ fn delete_old_log_files(keep: usize) {
     }
 }
 
+// Tauri command to open the log directory
+#[tauri::command]
 pub fn open_log_directory(_app_handle: AppHandle) -> Result<(), String> {
     let logs_dir = Path::new("logs");
+
+    // Ensure the directory exists
     if !logs_dir.exists() {
         fs::create_dir_all(logs_dir)
             .map_err(|e| format!("Failed to create logs directory: {}", e))?;
     }
 
-    let path = logs_dir.to_string_lossy().to_string();
+    let path = logs_dir
+        .canonicalize()
+        .map_err(|e| format!("Failed to get absolute path to logs directory: {}", e))?
+        .to_string_lossy()
+        .to_string();
+
     log::info!("Opening logs folder: {}", path);
 
-    // Use the system's default file explorer
-    let status = Command::new(if cfg!(target_os = "windows") {
-        "explorer"
-    } else if cfg!(target_os = "macos") {
-        "open"
-    } else {
-        "xdg-open"
-    })
-    .arg(&path)
-    .status()
-    .map_err(|e| format!("Failed to open log directory: {}", e))?;
+    // Use the system's default file explorer with proper error handling
+    #[cfg(target_os = "windows")]
+    {
+        let status = Command::new("explorer")
+            .arg(&path)
+            .status()
+            .map_err(|e| format!("Failed to open log directory: {}", e))?;
 
-    if !status.success() {
-        return Err(format!(
-            "Failed to open log directory: process exited with status {}",
-            status
-        ));
+        if !status.success() {
+            // Try an alternative method on Windows
+            let status = Command::new("cmd")
+                .args(["/c", "start", "", &path])
+                .status()
+                .map_err(|e| format!("Failed to open log directory (alternative method): {}", e))?;
+
+            if !status.success() {
+                return Err(format!(
+                    "Failed to open log directory: process exited with status {}",
+                    status
+                ));
+            }
+        }
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        let status = Command::new("open")
+            .arg(&path)
+            .status()
+            .map_err(|e| format!("Failed to open log directory: {}", e))?;
+
+        if !status.success() {
+            return Err(format!(
+                "Failed to open log directory: process exited with status {}",
+                status
+            ));
+        }
+    }
+
+    #[cfg(not(any(target_os = "windows", target_os = "macos")))]
+    {
+        let status = Command::new("xdg-open")
+            .arg(&path)
+            .status()
+            .map_err(|e| format!("Failed to open log directory: {}", e))?;
+
+        if !status.success() {
+            return Err(format!(
+                "Failed to open log directory: process exited with status {}",
+                status
+            ));
+        }
     }
 
     Ok(())
