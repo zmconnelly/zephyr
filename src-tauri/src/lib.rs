@@ -194,6 +194,7 @@ pub fn run() {
             updater::get_github_token,
             updater::update_github_url,
             updater::test_github_token,
+            logger::log,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -1,7 +1,7 @@
 <script setup lang="ts">
-  import { ref } from 'vue';
+  import { ref, computed } from 'vue';
 
-  defineProps<{
+  const props = defineProps<{
     modelValue: string;
   }>();
 
@@ -15,6 +15,31 @@
   }>();
 
   const searchInput = ref<HTMLInputElement | null>(null);
+  const inputContainer = ref<HTMLDivElement | null>(null);
+
+  // Format the input text with styled spans
+  const formattedText = computed(() => {
+    if (!props.modelValue) return '';
+    
+    // Replace spaces with non-breaking spaces to preserve them in HTML
+    const text = props.modelValue.replace(/ /g, '&nbsp;');
+    
+    // Split by non-breaking spaces to process each word
+    const words = text.split('&nbsp;');
+    const result = words.map((word, index) => {
+      // Skip empty words but preserve the space
+      if (!word) return index < words.length - 1 ? '&nbsp;' : '';
+      
+      // Color words starting with ! in blue
+      if (word.startsWith('!')) {
+        return `<span class="text-blue-500">${word}</span>${index < words.length - 1 ? '&nbsp;' : ''}`;
+      }
+      
+      return `<span>${word}</span>${index < words.length - 1 ? '&nbsp;' : ''}`;
+    }).join('');
+    
+    return result;
+  });
 
   function updateValue(event: Event) {
     const target = event.target as HTMLInputElement;
@@ -61,10 +86,9 @@
     <div class="relative">
       <button
         type="submit"
-        class="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400 hover:text-blue-500 dark:hover:text-blue-400"
+        class="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 z-10"
       >
         <svg
-          xmlns="http://www.w3.org/2000/svg"
           class="h-6 w-6"
           fill="none"
           viewBox="0 0 24 24"
@@ -78,17 +102,25 @@
           />
         </svg>
       </button>
-      <input
-        ref="searchInput"
-        :value="modelValue"
-        @input="updateValue"
-        type="text"
-        placeholder="Search or type a URL"
-        class="w-full px-4 py-3 pl-10 pr-16 rounded-lg border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-lg"
-        @keydown="handleKeyDown"
-        @blur="handleBlur"
-      />
-      <div class="absolute right-2 top-1/2 transform -translate-y-1/2 flex space-x-2">
+
+      <div ref="inputContainer" class="relative">
+        <input
+          ref="searchInput"
+          :value="modelValue"
+          @input="updateValue"
+          type="text"
+          placeholder="Search or type a URL"
+          class="w-full px-4 py-3 pl-10 pr-16 rounded-lg border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-transparent caret-gray-900 dark:caret-white shadow-lg"
+          @keydown="handleKeyDown"
+          @blur="handleBlur"
+        />
+        <div 
+          class="absolute left-0 top-0 w-full h-full pointer-events-none px-4 py-3 pl-10 pr-16 text-gray-900 dark:text-white flex items-center whitespace-pre overflow-hidden"
+          v-html="formattedText || (modelValue ? '' : 'Search or type a URL')"
+        ></div>
+      </div>
+
+      <div class="absolute right-2 top-1/2 transform -translate-y-1/2 flex space-x-2 z-10">
         <button
           type="button"
           @click.prevent="toggleSettingsPanel"
@@ -96,7 +128,6 @@
           title="Settings"
         >
           <svg
-            xmlns="http://www.w3.org/2000/svg"
             class="h-5 w-5"
             fill="none"
             viewBox="0 0 24 24"
@@ -123,7 +154,6 @@
           title="Learn more"
         >
           <svg
-            xmlns="http://www.w3.org/2000/svg"
             class="h-5 w-5"
             fill="none"
             viewBox="0 0 24 24"
