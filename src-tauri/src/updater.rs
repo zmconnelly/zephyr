@@ -56,7 +56,7 @@ pub async fn check_for_updates(app: AppHandle) -> tauri_plugin_updater::Result<(
 
 // Store GitHub token (kept for compatibility)
 #[tauri::command]
-pub fn set_github_token(app: AppHandle, token: String) -> Result<(), String> {
+pub fn set_github_token(_app: AppHandle, _token: String) -> Result<(), String> {
     logger::warn("Setting GitHub token at runtime is not supported in this version");
     logger::info("Please set the GITHUB_TOKEN environment variable at build time instead");
     Ok(())
@@ -64,13 +64,13 @@ pub fn set_github_token(app: AppHandle, token: String) -> Result<(), String> {
 
 // Get stored GitHub token (kept for compatibility)
 #[tauri::command]
-pub fn get_github_token(app: AppHandle) -> Result<String, String> {
+pub fn get_github_token(_app: AppHandle) -> Result<String, String> {
     Ok(get_bundled_token().to_string())
 }
 
 // Update GitHub URL (kept for compatibility)
 #[tauri::command]
-pub fn update_github_url(app: AppHandle, token: String) -> Result<(), String> {
+pub fn update_github_url(_app: AppHandle, _token: String) -> Result<(), String> {
     logger::warn("Updating GitHub URL at runtime is not supported in this version");
     logger::info("Please set the GITHUB_TOKEN environment variable at build time instead");
     Ok(())

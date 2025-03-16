@@ -19,12 +19,18 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
-    
+
     /* Tauri */
     "paths": {
       "@tauri-apps/api/*": ["./node_modules/@tauri-apps/api/*"]
     }
   },
-  "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue", "node_modules/@tauri-apps/api/**/*.d.ts"],
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.d.ts",
+    "src/**/*.tsx",
+    "src/**/*.vue",
+    "node_modules/@tauri-apps/api/**/*.d.ts"
+  ],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

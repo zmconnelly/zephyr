@@ -5,19 +5,16 @@
   "type": "module",
   "scripts": {
     "dev": "tauri dev",
-    "build": "tauri build",
-    "preview": "vite preview",
-    "tauri": "tauri",
-    "vite": "vite"
+    "build": "dotenv -e .env -- tauri build",
+    "cargo": "cd src-tauri && cargo build && cd ..",
+    "format": "prettier --write ."
   },
   "dependencies": {
-    "@tailwindcss/vite": "^4.0.12",
+    "@tailwindcss/vite": "^4.0.14",
     "@tauri-apps/api": "^2.3.0",
-    "@tauri-apps/plugin-global-shortcut": "^2.2.0",
     "@tauri-apps/plugin-opener": "^2.2.6",
-    "@tauri-apps/plugin-updater": "^2.5.1",
-    "prettier": "^3.5.3",
-    "tailwindcss": "^4.0.12",
+    "@tauri-apps/plugin-updater": "^2.6.0",
+    "tailwindcss": "^4.0.14",
     "vue": "^3.5.13"
   },
   "devDependencies": {
@@ -27,7 +24,9 @@
     "@vitejs/plugin-vue": "^5.2.1",
     "semantic-release": "^24.2.3",
     "typescript": "~5.6.3",
-    "vite": "^6.2.1",
-    "vue-tsc": "^2.2.8"
+    "vite": "^6.2.2",
+    "vue-tsc": "^2.2.8",
+    "prettier": "^3.5.3",
+    "dotenv-cli": "^7.4.4"
   }
 }

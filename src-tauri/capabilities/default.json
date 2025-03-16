@@ -12,7 +12,6 @@
     "core:window:allow-set-position",
     "core:window:allow-center",
     "opener:default",
-    "global-shortcut:default",
     "updater:default"
   ]
 }
