@@ -44,6 +44,9 @@
   },
   "plugins": {
     "updater": {
+      "windows": {
+        "installMode": "passive"
+      },
       "active": true,
       "endpoints": [
         "https://github.com/zmconnelly/zephyr/releases/latest/download/latest.json"

@@ -16,13 +16,16 @@ mod system_tray;
 mod updater;
 
 pub fn run() {
-    logger::info(&format!("Starting Zephyr v{}", env!("CARGO_PKG_VERSION")));
-
     tauri::Builder::default()
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
+            logger::info(&format!(
+                "Starting Zephyr v{}",
+                app.package_info().version.to_string()
+            ));
+
             let key_listener = KeyListener::new();
 
             let app_handle = app.handle().clone();
