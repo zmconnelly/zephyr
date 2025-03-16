@@ -7,7 +7,6 @@ use std::collections::HashMap;
 use tauri::AppHandle;
 
 pub async fn load_all_bangs(app_handle: &AppHandle) -> HashMap<String, Bang> {
-    // First, try to load from cache
     let mut should_update = false;
     let mut bangs = if let Some(cache) = load_cache(app_handle) {
         // Check if cache is older than 7 days

@@ -19,7 +19,8 @@ pub async fn get_search_suggestions(query: String) -> Result<Vec<String>, String
     logger::info(&format!("Getting suggestions: '{}'", query));
 
     let url = format!(
-        "https://suggestqueries.google.com/complete/search?q={}",
+        // Client needs to be specified of Google gets angry
+        "https://suggestqueries.google.com/complete/search?client=chrome&q={}",
         urlencoding::encode(&query)
     );
 
