@@ -1,7 +1,6 @@
 use crate::bangs::{self, Bang};
 use crate::logger;
 use std::collections::HashMap;
-use std::process::Command;
 use std::sync::Mutex;
 use tauri::AppHandle;
 use tauri::State;
@@ -19,9 +18,8 @@ pub async fn get_search_suggestions(query: String) -> Result<Vec<String>, String
 
     logger::info(&format!("Getting suggestions: '{}'", query));
 
-    // Google's suggestion API URL
     let url = format!(
-        "https://suggestqueries.google.com/complete/search?client=chrome&q={}",
+        "https://suggestqueries.google.com/complete/search?q={}",
         urlencoding::encode(&query)
     );
 
@@ -52,88 +50,53 @@ pub async fn get_search_suggestions(query: String) -> Result<Vec<String>, String
 }
 
 #[tauri::command]
-pub async fn search(query: String, bang_state: State<'_, BangState>) -> Result<(), String> {
-    // Check if the query is a URL
+pub async fn search(
+    app_handle: AppHandle,
+    query: String,
+    bang_state: State<'_, BangState>,
+) -> Result<(), String> {
     let url = if is_url(&query) {
-        // Ensure the URL has a scheme (http/https)
         ensure_url_scheme(query)
     } else {
-        // Not a URL, process as a regular search with potential bangs
         get_bang_redirect_url(query, &bang_state)
     };
 
     logger::info(&format!("Opening URL: {}", url));
 
-    // Spawn browser process
-    #[cfg(target_os = "windows")]
-    {
-        open_url_without_console(&url)
-    }
-
-    #[cfg(not(target_os = "windows"))]
-    {
-        Err("Opening browser is only supported on Windows".to_string())
-    }
+    open_url(app_handle, &url)
 }
 
 #[tauri::command]
-pub async fn open_url(url: String) -> Result<(), String> {
-    #[cfg(target_os = "windows")]
-    {
-        open_url_without_console(&url)
-    }
+pub fn open_url(app_handle: AppHandle, url: &str) -> Result<(), String> {
+    use tauri_plugin_opener::OpenerExt;
 
-    #[cfg(not(target_os = "windows"))]
-    {
-        Err("Opening browser is only supported on Windows".to_string())
-    }
+    app_handle
+        .opener()
+        .open_url(url, None::<&str>)
+        .map_err(|e| format!("Failed to open URL: {}", e))
 }
 
-#[cfg(target_os = "windows")]
-fn open_url_without_console(url: &str) -> Result<(), String> {
-    use std::os::windows::process::CommandExt;
-
-    // CREATE_NO_WINDOW flag to prevent console window from appearing
-    const CREATE_NO_WINDOW: u32 = 0x08000000;
-
-    match Command::new("cmd")
-        .args(["/C", "start", "chrome", url])
-        .creation_flags(CREATE_NO_WINDOW)
-        .spawn()
-    {
-        Ok(_) => Ok(()),
-        Err(e) => Err(format!("Failed to open Chrome: {}", e)),
-    }
-}
-
-// Function to check if a string is likely a URL
 fn is_url(input: &str) -> bool {
     let input = input.trim();
 
-    // First, check if it's a valid URL with scheme
     if let Ok(_) = Url::parse(input) {
         return true;
     }
 
-    // Check if adding https:// prefix makes it a valid URL
     if let Ok(_) = Url::parse(&format!("https://{}", input)) {
-        // Make sure it has at least one dot (for domain)
         return input.contains(".");
     }
 
-    false
+    return false;
 }
 
-// Function to ensure a URL has a scheme (http/https)
 fn ensure_url_scheme(url: String) -> String {
     let url = url.trim();
 
-    // Check if it's already a valid URL with scheme
     if Url::parse(url).is_ok() {
         return url.to_string();
     }
 
-    // Try adding https:// prefix
     let with_https = format!("https://{}", url);
     if Url::parse(&with_https).is_ok() {
         return with_https;
@@ -164,14 +127,12 @@ fn get_bang_redirect_url(query: String, bang_state: &State<BangState>) -> String
     )
 }
 
-// Add a command to get all available bangs
 #[tauri::command]
 pub fn get_available_bangs(bang_state: State<'_, BangState>) -> Vec<(String, String)> {
     let bangs_lock = bang_state.bangs.lock().unwrap();
     bangs::get_all_bangs(&bangs_lock)
 }
 
-// Add a command to refresh bangs from DuckDuckGo
 #[tauri::command]
 pub async fn refresh_bangs(
     app_handle: AppHandle,
@@ -179,14 +140,12 @@ pub async fn refresh_bangs(
 ) -> Result<(), String> {
     let bangs = bangs::refresh_bangs(&app_handle).await?;
 
-    // Update the state
     let mut bangs_lock = bang_state.bangs.lock().unwrap();
     *bangs_lock = bangs;
 
     Ok(())
 }
 
-// Add a command to add a custom bang
 #[tauri::command]
 pub fn add_custom_bang(
     app_handle: AppHandle,
@@ -210,7 +169,6 @@ pub fn add_custom_bang(
     bangs::add_custom_bang(&app_handle, &mut bangs_lock, bang)
 }
 
-// Add a command to delete a custom bang
 #[tauri::command]
 pub fn delete_custom_bang(
     app_handle: AppHandle,
@@ -221,7 +179,6 @@ pub fn delete_custom_bang(
     bangs::delete_custom_bang(&app_handle, &mut bangs_lock, &bang_id)
 }
 
-// Add a command to clear the bangs cache and force a refresh
 #[tauri::command]
 pub async fn clear_bangs_cache(
     app_handle: AppHandle,
@@ -229,7 +186,6 @@ pub async fn clear_bangs_cache(
 ) -> Result<(), String> {
     let bangs = bangs::refresh_bangs(&app_handle).await?;
 
-    // Update the state
     let mut bangs_lock = bang_state.bangs.lock().unwrap();
     *bangs_lock = bangs;
 

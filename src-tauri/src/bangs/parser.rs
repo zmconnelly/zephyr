@@ -191,7 +191,6 @@ pub(crate) async fn fetch_duckduckgo_bangs() -> Result<HashMap<String, Bang>, St
             js_content.len()
         ));
 
-        // Try to parse the bangs
         match parse_duckduckgo_bangs(&js_content) {
             Ok(bangs) => {
                 logger::info(&format!(

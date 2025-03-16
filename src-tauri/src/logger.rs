@@ -4,9 +4,21 @@ use flexi_logger::{DeferredNow, Duplicate, FileSpec, Logger, WriteMode};
 use log::Record;
 use std::{fs, io::Write, path::Path, process::Command};
 use tauri::AppHandle;
+use tauri_plugin_opener::OpenerExt;
 
 pub fn init() {
-    let format = |write: &mut dyn Write, now: &mut DeferredNow, record: &Record| {
+    let file_format = |write: &mut dyn Write, now: &mut DeferredNow, record: &Record| {
+        write!(
+            write,
+            "{} [{}] - {} - {}",
+            now.now().format("%Y-%m-%d %H:%M:%S"),
+            record.level(),
+            record.target(),
+            record.args()
+        )
+    };
+
+    let terminal_format = |write: &mut dyn Write, now: &mut DeferredNow, record: &Record| {
         let level = record.level();
         let color_code = match level {
             log::Level::Error => "\x1b[31m", // Red
@@ -18,7 +30,7 @@ pub fn init() {
 
         write!(
             write,
-            "{}{} [{}] - {} - {}\x1b[0m\n",
+            "{}{} [{}] - {} - {}\x1b[0m",
             color_code,
             now.now().format("%Y-%m-%d %H:%M:%S"),
             level,
@@ -34,7 +46,8 @@ pub fn init() {
 
     Logger::try_with_str("info")
         .unwrap()
-        .format(format)
+        .format_for_files(file_format)
+        .format_for_stdout(terminal_format)
         .log_to_file(log_file_spec)
         .write_mode(WriteMode::BufferAndFlush)
         .duplicate_to_stdout(Duplicate::All)
@@ -80,12 +93,9 @@ fn delete_old_log_files(keep: usize) {
     }
 }
 
-// Tauri command to open the log directory
-#[tauri::command]
-pub fn open_log_directory(_app_handle: AppHandle) -> Result<(), String> {
+pub fn open_log_directory(app_handle: AppHandle) -> Result<(), String> {
     let logs_dir = Path::new("logs");
 
-    // Ensure the directory exists
     if !logs_dir.exists() {
         fs::create_dir_all(logs_dir)
             .map_err(|e| format!("Failed to create logs directory: {}", e))?;
@@ -99,64 +109,14 @@ pub fn open_log_directory(_app_handle: AppHandle) -> Result<(), String> {
 
     log::info!("Opening logs folder: {}", path);
 
-    // Use the system's default file explorer with proper error handling
-    #[cfg(target_os = "windows")]
-    {
-        let status = Command::new("explorer")
-            .arg(&path)
-            .status()
-            .map_err(|e| format!("Failed to open log directory: {}", e))?;
-
-        if !status.success() {
-            // Try an alternative method on Windows
-            let status = Command::new("cmd")
-                .args(["/c", "start", "", &path])
-                .status()
-                .map_err(|e| format!("Failed to open log directory (alternative method): {}", e))?;
-
-            if !status.success() {
-                return Err(format!(
-                    "Failed to open log directory: process exited with status {}",
-                    status
-                ));
-            }
-        }
-    }
-
-    #[cfg(target_os = "macos")]
-    {
-        let status = Command::new("open")
-            .arg(&path)
-            .status()
-            .map_err(|e| format!("Failed to open log directory: {}", e))?;
-
-        if !status.success() {
-            return Err(format!(
-                "Failed to open log directory: process exited with status {}",
-                status
-            ));
-        }
-    }
-
-    #[cfg(not(any(target_os = "windows", target_os = "macos")))]
-    {
-        let status = Command::new("xdg-open")
-            .arg(&path)
-            .status()
-            .map_err(|e| format!("Failed to open log directory: {}", e))?;
-
-        if !status.success() {
-            return Err(format!(
-                "Failed to open log directory: process exited with status {}",
-                status
-            ));
-        }
-    }
+    app_handle
+        .opener()
+        .open_path(path, None::<&str>)
+        .map_err(|e| format!("Failed to open log directory: {}", e))?;
 
     Ok(())
 }
 
-// Log a message from the frontend
 #[tauri::command]
 pub fn log(message: String, level: &str) {
     match level {

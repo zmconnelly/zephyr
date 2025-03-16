@@ -4,7 +4,6 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::collections::HashMap;
 
-/// Represents a search bang that can be used to search a specific site
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Bang {
     pub id: String,
@@ -15,7 +14,6 @@ pub struct Bang {
     pub is_custom: bool,
 }
 
-/// Cache structure for storing bangs with a timestamp
 #[derive(Serialize, Deserialize)]
 pub(crate) struct BangCache {
     pub bangs: HashMap<String, Bang>,
@@ -23,7 +21,6 @@ pub(crate) struct BangCache {
     pub last_updated: DateTime<Utc>,
 }
 
-/// Structure for parsing DuckDuckGo bang entries
 #[derive(Debug, Deserialize)]
 pub(crate) struct DuckDuckGoBang {
     #[serde(rename = "c", default)]
@@ -50,7 +47,6 @@ pub(crate) struct DuckDuckGoBang {
 }
 
 impl DuckDuckGoBang {
-    /// Check if this bang has all required fields
     pub fn is_valid(&self) -> bool {
         self.category.is_some()
             && self.domain.is_some()
@@ -60,13 +56,11 @@ impl DuckDuckGoBang {
             && self.url.is_some()
     }
 
-    /// Convert to a Bang if valid
     pub fn to_bang(&self) -> Option<(String, Bang)> {
         if !self.is_valid() {
             return None;
         }
 
-        // We can safely unwrap here because we checked is_valid()
         let trigger = self.trigger.as_ref().unwrap().clone();
 
         let bang = Bang {

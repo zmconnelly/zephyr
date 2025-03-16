@@ -19,7 +19,6 @@ pub fn get_startup_status() -> Result<StartupStatus, String> {
         Err(_) => return Ok(StartupStatus { enabled: false }),
     };
 
-    // Check if our app is in the startup registry
     let is_enabled = run_key.get_value::<String, _>("Zephyr").is_ok();
 
     logger::debug(&format!("Startup status: {}", is_enabled));
@@ -34,7 +33,6 @@ pub fn toggle_run_at_startup(enable: bool) -> Result<StartupStatus, String> {
 
     let hkcu = RegKey::predef(HKEY_CURRENT_USER);
 
-    // Open or create the Run registry key
     let run_key_result = hkcu.open_subkey_with_flags(
         "Software\\Microsoft\\Windows\\CurrentVersion\\Run",
         KEY_WRITE,
@@ -43,7 +41,6 @@ pub fn toggle_run_at_startup(enable: bool) -> Result<StartupStatus, String> {
     let run_key = match run_key_result {
         Ok(key) => key,
         Err(_) => {
-            // Create the key if it doesn't exist
             let (key, _) = hkcu
                 .create_subkey("Software\\Microsoft\\Windows\\CurrentVersion\\Run")
                 .map_err(|e| e.to_string())?;
@@ -52,7 +49,6 @@ pub fn toggle_run_at_startup(enable: bool) -> Result<StartupStatus, String> {
     };
 
     if enable {
-        // Get path to the executable using env::current_exe()
         let exe_path = env::current_exe()
             .map_err(|e| e.to_string())?
             .to_string_lossy()
@@ -63,9 +59,8 @@ pub fn toggle_run_at_startup(enable: bool) -> Result<StartupStatus, String> {
             .set_value("Zephyr", &exe_path)
             .map_err(|e| e.to_string())?;
     } else {
-        // Remove from startup
         logger::debug("Removing from startup");
-        let _ = run_key.delete_value("Zephyr"); // Ignore errors if value doesn't exist
+        let _ = run_key.delete_value("Zephyr");
     }
 
     Ok(StartupStatus { enabled: enable })
