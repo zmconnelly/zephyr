@@ -1,3 +1,10 @@
+## [1.3.1](https://github.com/zmconnelly/zephyr/compare/v1.3.0...v1.3.1) (2025-03-16)
+
+
+### Bug Fixes
+
+* auto-update improvements ([2348f3c](https://github.com/zmconnelly/zephyr/commit/2348f3c2a8b7a04cc867c6312e18b6cbbb89ba56))
+
 # [1.3.0](https://github.com/zmconnelly/zephyr/compare/v1.2.1...v1.3.0) (2025-03-16)
 
 
