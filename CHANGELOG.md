@@ -1,3 +1,10 @@
+# [1.3.0](https://github.com/zmconnelly/zephyr/compare/v1.2.1...v1.3.0) (2025-03-16)
+
+
+### Features
+
+* readme ([24c6c99](https://github.com/zmconnelly/zephyr/commit/24c6c99392c3eb541c75ec5df054d320b2a528d6))
+
 ## [1.2.1](https://github.com/zmconnelly/zephyr/compare/v1.2.0...v1.2.1) (2025-03-08)
 
 
