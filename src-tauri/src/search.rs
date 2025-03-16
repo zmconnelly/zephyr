@@ -1,4 +1,4 @@
-use crate::bangs;
+use crate::bangs::{self, Bang};
 use crate::logger;
 use std::collections::HashMap;
 use std::process::Command;
@@ -8,7 +8,7 @@ use tauri::State;
 use url::Url;
 
 pub struct BangState {
-    pub bangs: Mutex<HashMap<String, bangs::Bang>>,
+    pub bangs: Mutex<HashMap<String, Bang>>,
 }
 
 #[tauri::command]
@@ -177,7 +177,7 @@ pub async fn refresh_bangs(
     app_handle: AppHandle,
     bang_state: State<'_, BangState>,
 ) -> Result<(), String> {
-    let bangs = bangs::load_all_bangs(&app_handle).await;
+    let bangs = bangs::refresh_bangs(&app_handle).await?;
 
     // Update the state
     let mut bangs_lock = bang_state.bangs.lock().unwrap();
@@ -219,4 +219,19 @@ pub fn delete_custom_bang(
 ) -> Result<(), String> {
     let mut bangs_lock = bang_state.bangs.lock().unwrap();
     bangs::delete_custom_bang(&app_handle, &mut bangs_lock, &bang_id)
+}
+
+// Add a command to clear the bangs cache and force a refresh
+#[tauri::command]
+pub async fn clear_bangs_cache(
+    app_handle: AppHandle,
+    bang_state: State<'_, BangState>,
+) -> Result<(), String> {
+    let bangs = bangs::refresh_bangs(&app_handle).await?;
+
+    // Update the state
+    let mut bangs_lock = bang_state.bangs.lock().unwrap();
+    *bangs_lock = bangs;
+
+    Ok(())
 }

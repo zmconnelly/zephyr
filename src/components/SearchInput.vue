@@ -20,24 +20,26 @@
   // Format the input text with styled spans
   const formattedText = computed(() => {
     if (!props.modelValue) return '';
-    
+
     // Replace spaces with non-breaking spaces to preserve them in HTML
     const text = props.modelValue.replace(/ /g, '&nbsp;');
-    
+
     // Split by non-breaking spaces to process each word
     const words = text.split('&nbsp;');
-    const result = words.map((word, index) => {
-      // Skip empty words but preserve the space
-      if (!word) return index < words.length - 1 ? '&nbsp;' : '';
-      
-      // Color words starting with ! in blue
-      if (word.startsWith('!')) {
-        return `<span class="text-blue-500">${word}</span>${index < words.length - 1 ? '&nbsp;' : ''}`;
-      }
-      
-      return `<span>${word}</span>${index < words.length - 1 ? '&nbsp;' : ''}`;
-    }).join('');
-    
+    const result = words
+      .map((word, index) => {
+        // Skip empty words but preserve the space
+        if (!word) return index < words.length - 1 ? '&nbsp;' : '';
+
+        // Color words starting with ! in blue
+        if (word.startsWith('!')) {
+          return `<span class="text-blue-500">${word}</span>${index < words.length - 1 ? '&nbsp;' : ''}`;
+        }
+
+        return `<span>${word}</span>${index < words.length - 1 ? '&nbsp;' : ''}`;
+      })
+      .join('');
+
     return result;
   });
 
@@ -88,12 +90,7 @@
         type="submit"
         class="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 z-10"
       >
-        <svg
-          class="h-6 w-6"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
+        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path
             stroke-linecap="round"
             stroke-linejoin="round"
@@ -114,7 +111,7 @@
           @keydown="handleKeyDown"
           @blur="handleBlur"
         />
-        <div 
+        <div
           class="absolute left-0 top-0 w-full h-full pointer-events-none px-4 py-3 pl-10 pr-16 text-gray-900 dark:text-white flex items-center whitespace-pre overflow-hidden"
           v-html="formattedText || (modelValue ? '' : 'Search or type a URL')"
         ></div>
@@ -127,12 +124,7 @@
           class="text-gray-500 dark:text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 focus:outline-none"
           title="Settings"
         >
-          <svg
-            class="h-5 w-5"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
+          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path
               stroke-linecap="round"
               stroke-linejoin="round"
@@ -153,12 +145,7 @@
           class="text-gray-500 dark:text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 focus:outline-none"
           title="Learn more"
         >
-          <svg
-            class="h-5 w-5"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
+          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path
               stroke-linecap="round"
               stroke-linejoin="round"

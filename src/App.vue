@@ -2,13 +2,13 @@
   import { ref, watch, onMounted, computed } from 'vue';
   import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
   import { scaleWindow, setIntialPosition } from './utils/windowUtils';
-  import { executeSearch, getAvailableBangs, getSearchSuggestions } from './utils/api';
-
+  import { executeSearch, getAvailableBangs } from './utils/api';
   // Components
   import SearchInput from './components/SearchInput.vue';
   import SearchSuggestions from './components/SearchSuggestions.vue';
   import InfoPanel from './components/InfoPanel.vue';
   import SettingsPanel from './components/SettingsPanel.vue';
+  import { SearchService } from './utils/searchService';
 
   // Type definitions
   type SearchSuggestionsInstance = InstanceType<typeof SearchSuggestions> & {
@@ -17,6 +17,8 @@
     clearSelection: () => void;
     getSelectedSuggestion: () => string | null;
   };
+
+  const searchService = new SearchService();
 
   // Constants
   const MAX_DISPLAYED_SUGGESTIONS = 8;
@@ -83,7 +85,10 @@
     }
 
     if (query.trim().length > 0) {
-      searchSuggestions.value = await getSearchSuggestions(query.trim(), MAX_DISPLAYED_SUGGESTIONS);
+      searchSuggestions.value = await searchService.getSearchSuggestions(
+        query.trim(),
+        MAX_DISPLAYED_SUGGESTIONS
+      );
       showSuggestions.value = true;
     } else {
       searchSuggestions.value = [];
@@ -225,11 +230,8 @@
       />
 
       <InfoPanel :show="showInfoPanel" :bangs-count="bangs.length" :available-bangs="bangs" />
-      
-      <SettingsPanel 
-        :show="showSettingsPanel" 
-        @close="showSettingsPanel = false" 
-      />
+
+      <SettingsPanel :show="showSettingsPanel" @close="showSettingsPanel = false" />
     </div>
   </main>
 </template>
